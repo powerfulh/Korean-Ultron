@@ -16,13 +16,13 @@ import java.util.*;
 public class Core {
     final Bank bank;
     final ReplaceRepeatedChars replaceRepeatedChars;
-    final SmartStartBooster smartStartBooster;
+    final ContextCore contextCore;
     final SqlMapper mapper;
 
-    public Core(Bank bank, ReplaceRepeatedChars replaceRepeatedChars, SmartStartBooster smartStartBooster, SqlMapper mapper) {
+    public Core(Bank bank, ReplaceRepeatedChars replaceRepeatedChars, ContextCore contextCore, SqlMapper mapper) {
         this.bank = bank;
         this.replaceRepeatedChars = replaceRepeatedChars;
-        this.smartStartBooster = smartStartBooster;
+        this.contextCore = contextCore;
         this.mapper = mapper;
     }
 
@@ -38,7 +38,7 @@ public class Core {
         for (var opener: openerList) {
             List<Toke> understandList = new ArrayList<>();
             try {
-                StaticUtil.separateToken(understandList, understandTarget.pushToke(understandList, opener), bank.wordList, failHistory, bank.contextList, sentenceList, bank.compoundList, successHistory, smartStartBooster);
+                StaticUtil.separateToken(understandList, understandTarget.pushToke(understandList, opener), bank.wordList, failHistory, bank.contextList, sentenceList, bank.compoundList, successHistory, contextCore);
             } catch (PlmException plmException) {
                 e = plmException;
             }

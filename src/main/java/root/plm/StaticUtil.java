@@ -14,7 +14,7 @@ public class StaticUtil {
     public static <T extends Ntity>T selectWord(int n, List<T> data) {
         return data.stream().filter(item -> item.getN() == n).findAny().orElseThrow();
     }
-    public static void separateToken(List<Toke> understandList, UnderstandTarget src, final List<Word> wordList, Map<String, List<Word>> failHistory, List<Context> contextList, List<Sentence> sentenceList, List<Compound> compoundList, SuccessHistory successHistory, SmartStartBooster smartStartBooster) {
+    public static void separateToken(List<Toke> understandList, UnderstandTarget src, final List<Word> wordList, Map<String, List<Word>> failHistory, List<Context> contextList, List<Sentence> sentenceList, List<Compound> compoundList, SuccessHistory successHistory, ContextCore contextCore) {
         if(src.success()) sentenceList.add(new Sentence(understandList, contextList));
         else {
             Toke lastUnderstand = understandList.get(understandList.size() - 1);
@@ -33,11 +33,11 @@ public class StaticUtil {
                         Toke toke = src.getAvailableToke(item);
                         if(toke == null || understandList.isEmpty()) return toke;
                         try {
-                            smartStartBooster.rightContext(toke, lastUnderstand, toke, contextList, compoundList, wordList, lastUnderstand.isRightSpace(), lastUnderstand.otherOption);
+                            contextCore.rightContext(toke, lastUnderstand, toke, contextList, compoundList, wordList, lastUnderstand.isRightSpace(), lastUnderstand.otherOption);
                         } catch (PlmException e) {
                             return null;
                         }
-                        return smartStartBooster.lengthRate(toke);
+                        return contextCore.lengthRate(toke);
                     })
                     .filter(item -> {
                         if(item != null) {
@@ -54,7 +54,7 @@ public class StaticUtil {
                 failHistory.computeIfAbsent(src.getRight(), k -> new ArrayList<>());
                 failHistory.get(src.getRight()).add(lastUnderstand);
                 understandList.remove(understandList.size() - 1);
-                separateToken(understandList, src, wordList, failHistory, contextList, sentenceList, compoundList, successHistory, smartStartBooster);
+                separateToken(understandList, src, wordList, failHistory, contextList, sentenceList, compoundList, successHistory, contextCore);
                 return;
             }
             final Toke best = sameList.get(sameList.size() - 1);
@@ -64,13 +64,13 @@ public class StaticUtil {
                         .filter(item -> item.getRightContext() > 0)
                         .forEach(item -> {
                             var clone = new ArrayList<>(understandList);
-                            separateToken(clone, src.clone().pushToke(clone, item), wordList, failHistory, contextList, sentenceList, compoundList, successHistory, smartStartBooster);
+                            separateToken(clone, src.clone().pushToke(clone, item), wordList, failHistory, contextList, sentenceList, compoundList, successHistory, contextCore);
                         });
                 if(best.getRightContext() < 1) best.otherOption = true;
             }
             final String right = src.getRight();
             final int understandSize = understandList.size();
-            separateToken(understandList, src.pushToke(understandList, best), wordList, failHistory, contextList, sentenceList, compoundList, successHistory, smartStartBooster);
+            separateToken(understandList, src.pushToke(understandList, best), wordList, failHistory, contextList, sentenceList, compoundList, successHistory, contextCore);
             var branchList = sentenceList.subList(ss, sentenceList.size());
             if(!branchList.isEmpty()) {
                 successHistory.put(right, lastUnderstand.getN(), branchList.stream().map(item -> item.subList(understandSize, item.size())).toList());

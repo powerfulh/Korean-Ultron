@@ -8,11 +8,8 @@ import root.plm.entity.Word;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * 더 빠른 초기 시드 구성을 위한 도구
- */
 @Component
-public class SmartStartBooster {
+public class ContextCore {
     final String afterType = "어미";
     final String supportType = "조사";
     final String zeroType = "0";
@@ -22,11 +19,10 @@ public class SmartStartBooster {
         history.add(right);
         return contextList.stream().filter(StaticUtil.getContextFinder(left, right)).mapToInt(item -> space ? item.getSpace() : item.getCnt()).sum();
     }
-    public Toke rightContext(Toke target, Word left, Word right, List<Context> contextList, List<Compound> compoundList, List<Word> wordList, boolean space, boolean otherOption) {
-        target.contextHistory.computeIfAbsent(left.getN(), k -> new ArrayList<>());
-        var h = target.contextHistory.get(left.getN());
-        if(!h.isEmpty() && h.stream().anyMatch(item -> item.equals(right.getN()))) return null;
-        target.rightContext += contextPoint(contextList, left.getN(), right.getN(), space, h);
+    /**
+     * 더 빠른 초기 시드 구성을 위한 조정
+     */
+    void smartStartBoost(Word left, Word right, Toke target, boolean space, boolean otherOption) {
         if(left.getType().equals(zeroType) && right.getType().equals(supportType) && !right.getN().equals(191)) target.rightContext--;
         if(space && right.getType().equals(afterType)) target.rightContext--;
         if(!space) {
@@ -36,6 +32,13 @@ public class SmartStartBooster {
             if(leftWrapA && right.getType().equals("1")) target.rightContext--;
             if(!left.getN().equals(StaticUtil.opener) && right.getType().equals("감탄사")) target.rightContext--;
         }
+    }
+    public Toke rightContext(Toke target, Word left, Word right, List<Context> contextList, List<Compound> compoundList, List<Word> wordList, boolean space, boolean otherOption) {
+        target.contextHistory.computeIfAbsent(left.getN(), k -> new ArrayList<>());
+        var h = target.contextHistory.get(left.getN());
+        if(!h.isEmpty() && h.stream().anyMatch(item -> item.equals(right.getN()))) return null;
+        target.rightContext += contextPoint(contextList, left.getN(), right.getN(), space, h);
+        smartStartBoost(left, right, target, space, otherOption);
         target.rightContext *= left.getWord().length() + target.getWord().length();
         compoundList.stream()
                 .filter(item -> right.getN().equals(item.getWord()))
