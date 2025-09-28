@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="root.SqlMapper">
+    <select id="selectWord" resultType="map">
+        select * from llm_word w where w.type != 'opener'
+    </select>
+    <select id="selectSymbolWord" resultType="map">
+        select * from llm_word w where w.type = '기호'
+    </select>
+    <select id="selectContext" resultType="map">select * from plm_context c</select>
+    <select id="selectCompound" resultType="map">select * from llm_word_compound c</select>
+</mapper>

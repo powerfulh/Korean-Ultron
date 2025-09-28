@@ -1,0 +1,57 @@
+package root.plm;
+
+import org.springframework.stereotype.Component;
+import root.plm.entity.Compound;
+import root.plm.entity.Context;
+import root.plm.entity.Word;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * 더 빠른 초기 시드 구성을 위한 도구
+ */
+@Component
+public class SmartStartBooster {
+    final String afterType = "어미";
+    final String supportType = "조사";
+    final String zeroType = "0";
+    final List<Integer> issue29except = List.of(2506, 105, 3876);
+
+    int contextPoint(List<Context> contextList, int left, int right, boolean space, List<Integer> history) {
+        history.add(right);
+        return contextList.stream().filter(StaticUtil.getContextFinder(left, right)).mapToInt(item -> space ? item.getSpace() : item.getCnt()).sum();
+    }
+    public Toke rightContext(Toke target, Word left, Word right, List<Context> contextList, List<Compound> compoundList, List<Word> wordList, boolean space, boolean otherOption) {
+        target.contextHistory.computeIfAbsent(left.getN(), k -> new ArrayList<>());
+        var h = target.contextHistory.get(left.getN());
+        if(!h.isEmpty() && h.stream().anyMatch(item -> item.equals(right.getN()))) return null;
+        target.rightContext += contextPoint(contextList, left.getN(), right.getN(), space, h);
+        if(left.getType().equals(zeroType) && right.getType().equals(supportType) && !right.getN().equals(191)) target.rightContext--;
+        if(space && right.getType().equals(afterType)) target.rightContext--;
+        if(!space) {
+            if(left.getType().equals(afterType) && (right.getType().equals(supportType) || right.getType().equals(zeroType)) && !issue29except.contains(right.getN()) && otherOption) throw new PlmException("Maybe wrong", left.getWord() + "+" + target.getWord());
+            final boolean leftWrapA = left.getType().equals("무엇") || left.getType().equals("대명사");
+            if(leftWrapA && right.getType().equals(supportType)) target.rightContext++;
+            if(leftWrapA && right.getType().equals("1")) target.rightContext--;
+            if(!left.getN().equals(StaticUtil.opener) && right.getType().equals("감탄사")) target.rightContext--;
+        }
+        target.rightContext *= left.getWord().length() + target.getWord().length();
+        compoundList.stream()
+                .filter(item -> right.getN().equals(item.getWord()))
+                .findAny()
+                .ifPresent(compound ->
+                        rightContext(target, left, StaticUtil.selectWord(compound.getLeftword(), wordList), contextList, compoundList, wordList, space, false));
+        compoundList.stream()
+                .filter(item -> left.getN().equals(item.getWord()))
+                .findAny()
+                .ifPresent(compound ->
+                        rightContext(target, StaticUtil.selectWord(compound.getRightword(), wordList), right, contextList, compoundList, wordList, space, false));
+        return target;
+    }
+    public Toke lengthRate(Toke target) {
+        // 문맥이 없어 모든 분기가 탈락하고 마지막 놈만 잡히는 것을 방지하려고 최종적으로 후보의 길이가 긴 녀석을 고르도록 한다
+        if(target.rightContext == 0) target.rightContext = target.getWord().length() - 1;
+        return target;
+    }
+}
