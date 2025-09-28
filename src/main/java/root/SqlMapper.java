@@ -11,4 +11,5 @@ public interface SqlMapper {
     List<Map<String, Object>> selectSymbolWord();
     List<Map<String, Object>> selectContext();
     List<Map<String, Object>> selectCompound();
+    List<Map<String, Object>> selectGenerationTarget(List<Integer> list);
 }

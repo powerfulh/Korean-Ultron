@@ -11,7 +11,7 @@ public class StaticUtil {
     static Predicate<Twoken> getContextFinder(int lw, int rw) {
         return item -> item.getLeftword() == lw && item.getRightword() == rw;
     }
-    static <T extends Ntity>T selectWord(int n, List<T> data) {
+    public static <T extends Ntity>T selectWord(int n, List<T> data) {
         return data.stream().filter(item -> item.getN() == n).findAny().orElseThrow();
     }
     public static void separateToken(List<Toke> understandList, UnderstandTarget src, final List<Word> wordList, Map<String, List<Word>> failHistory, List<Context> contextList, List<Sentence> sentenceList, List<Compound> compoundList, SuccessHistory successHistory, SmartStartBooster smartStartBooster) {

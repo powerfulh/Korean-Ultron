@@ -12,4 +12,14 @@
     </select>
     <select id="selectContext" resultType="map">select * from plm_context c</select>
     <select id="selectCompound" resultType="map">select * from llm_word_compound c</select>
+    <select id="selectGenerationTarget" resultType="map">
+        select c.leftword, c.rightword, c.cnt, c.space
+        from plm_ultron_sentence ins, plm_ultron_sentence os, plm_ultron_context uc, plm_context c -- , llm_word lw, llm_word rw
+        where ins.n = os.target
+        and os.n = uc.sentence
+        and uc.context = c.n
+        -- and c.leftword = lw.n and c.rightword = rw.n
+        and ins.opener in
+        <foreach collection="list" item="item" open="(" separator="," close=")">#{item}</foreach>
+    </select>
 </mapper>
