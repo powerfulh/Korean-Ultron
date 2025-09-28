@@ -60,8 +60,9 @@ public class Core {
     Toke findToke(List<Context> src) {
         return new Toke(StaticUtil.selectWord(src.get(0).getLeftword(), bank.wordList), 0, 0, src.get(0).getSpace() > src.get(0).getCnt());
     }
-    Sentence toSentence(List<Toke> sentence, List<Context> src) {
+    Sentence toSentence(List<Toke> sentence, List<Context> src, int last) {
         if(src.isEmpty()) {
+            sentence.add(new Toke(StaticUtil.selectWord(last, bank.wordList), 0, 0, false));
             for (int i = 0; i < sentence.size() - 1; i++) {
                 Toke left = sentence.get(i);
                 Toke right = sentence.get(i + 1);
@@ -70,7 +71,7 @@ public class Core {
             return new Sentence(sentence, bank.contextList);
         }
         sentence.add(findToke(src));
-        return toSentence(sentence, src.subList(1, src.size()));
+        return toSentence(sentence, src.subList(1, src.size()), src.get(0).getRightword());
     }
     @GetMapping
     public List<Map<String, Object>> v1(String pureSrc) {
@@ -89,8 +90,9 @@ public class Core {
         List<Sentence> sentenceList = new ArrayList<>();
         listMap.keySet().forEach(item -> listMap.get(item).forEach(li -> {
             if(li.isEmpty()) return;
-            sentenceList.add(toSentence(new ArrayList<>(), li));
+            sentenceList.add(toSentence(new ArrayList<>(), li, li.get(li.size() - 1).getRightword()));
         }));
-        return sentenceList.stream().map(Sentence::getDto).toList();
+        var res = sentenceList.stream().sorted(Comparator.comparing(item -> item.getContextPoint() * -1)).map(Sentence::getDto).toList();
+        return res.size() > 5 ? res.subList(0, 5) : res;
     }
 }
