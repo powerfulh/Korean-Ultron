@@ -11,17 +11,17 @@ public class WordMap extends Entmap implements Word {
 
     @Override
     public String getWord() {
-        return map.get("word").toString();
+        return (String) map.get("word");
     }
 
     @Override
     public String getType() {
-        return map.get("type").toString();
+        return (String) map.get("type");
     }
 
     @Override
     public String getMemo() {
-        return map.get("memo").toString();
+        return (String) map.get("memo");
     }
 
     @Override

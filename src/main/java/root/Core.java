@@ -23,7 +23,7 @@ public class Core {
     }
 
     @GetMapping
-    public List<Sentence> v1(String pureSrc) {
+    public List<Map<String, Object>> v1(String pureSrc) {
         final UnderstandTarget understandTarget = new UnderstandTarget(replaceRepeatedChars.replaceRepeatedChars(pureSrc, bank.symbols));
         var openerList = bank.wordList.stream().map(understandTarget::getAvailableToke).filter(Objects::nonNull).toList();
         final String src = replaceRepeatedChars.replaceRepeatedChars(pureSrc.replaceAll("\\s", ""), bank.symbols);
@@ -43,6 +43,6 @@ public class Core {
         if(sentenceList.isEmpty() && e != null) throw e; // 싹 다 실패한 경우 나중에는 편집 거리로 리트해봐야겠지
         sentenceList.sort(Comparator.comparing(item -> item.getContextPoint() * -1));
         final int max = 5;
-        return sentenceList.size() > max ? sentenceList.subList(0, max) : sentenceList;
+        return (sentenceList.size() > max ? sentenceList.subList(0, max) : sentenceList).stream().map(Sentence::getDto).toList();
     }
 }
