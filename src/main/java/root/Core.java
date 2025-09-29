@@ -85,7 +85,6 @@ public class Core {
                 listMap.put(item.getLeftword(), generated);
                 generate(new ArrayList<>(), targetList, generated, item.getLeftword());
             }
-
         });
         List<Sentence> sentenceList = new ArrayList<>();
         listMap.keySet().forEach(item -> listMap.get(item).forEach(li -> {
