@@ -78,8 +78,8 @@ public class Core {
     @GetMapping
     public List<Map<String, Object>> v1(String pureSrc, boolean export) {
         Map<Integer, List<List<Context>>> listMap = new HashMap<>();
-        // 복수 토큰 문장은 나중에..
         var targetList = mapper.selectGenerationTarget(understand(pureSrc).stream().map(Toke::getN).toList()).stream().map(ContextMap::new).toList();
+        // 가능한 연결 모두 찾는 제너래이트에서 한 번 느림
         targetList.forEach(item -> {
             var list = listMap.get(item.getLeftword());
             if(list == null) {
@@ -89,6 +89,7 @@ public class Core {
             }
         });
         List<Sentence> sentenceList = new ArrayList<>();
+        // 콘텍스트들 번호로 단어 꽂을 때 두 번 느림
         listMap.keySet().forEach(item -> listMap.get(item).forEach(li -> {
             if(li.isEmpty()) return;
             sentenceList.add(toSentence(new ArrayList<>(), li, li.get(li.size() - 1).getRightword()));
