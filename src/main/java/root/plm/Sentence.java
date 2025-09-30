@@ -3,9 +3,11 @@ package root.plm;
 import root.plm.entity.Context;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Sentence extends ArrayList<Toke> {
     final int contextPoint;
+    final String export;
 
     public Sentence(List<Toke> list, List<Context> contextList) {
         super(list);
@@ -13,6 +15,7 @@ public class Sentence extends ArrayList<Toke> {
         int p = openerContext == null ? 0 : (openerContext.getCnt() * get(0).getWord().length());
         if(p == 0) p = get(0).getWord().length() - 1; // 오프너도 마찬가지로 오프너 콘텍스트가 없더라도 길이가 긴 것부터 잡게 해보자
         contextPoint = p + list.stream().mapToInt(Toke::getRightContext).sum();
+        export = stream().map(item -> item.isRightSpace() ? item.getWord() + " " : item.getWord()).collect(Collectors.joining());
     }
 
     public <T extends Context> T getContext(int li, int ri, List<T> list) {
@@ -22,10 +25,21 @@ public class Sentence extends ArrayList<Toke> {
     public int getContextPoint() {
         return contextPoint;
     }
-    public Map<String, Object> getDto() {
+    public Map<String, Object> getDto(boolean export) {
         Map<String, Object> dto = new HashMap<>();
         dto.put("point", contextPoint);
-        dto.put("list", this);
+        dto.put("list", export ? this.export : this);
         return dto;
+    }
+
+    @Override
+    public int hashCode() {
+        return export.length();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if(o instanceof Sentence s) return s.export.equals(export);
+        return false;
     }
 }

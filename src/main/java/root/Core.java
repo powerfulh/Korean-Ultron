@@ -48,14 +48,16 @@ public class Core {
         return sentenceList.get(0);
     }
     void generate(List<Context> sentence, List<ContextMap> targetList, List<List<Context>> generated, int last) {
+        boolean match = false;
         for (var c: targetList) {
             if(c.getLeftword() == last) {
-                sentence.add(c);
-                generate(new ArrayList<>(sentence), targetList.stream().filter(item -> item != c).toList(), generated, c.getRightword());
-                return;
+                match = true;
+                var clone = new ArrayList<>(sentence);
+                clone.add(c);
+                generate(clone, targetList.stream().filter(item -> item != c).toList(), generated, c.getRightword());
             }
         }
-        generated.add(sentence);
+        if(!match) generated.add(sentence);
     }
     Toke findToke(List<Context> src) {
         return new Toke(StaticUtil.selectWord(src.get(0).getLeftword(), bank.wordList), 0, 0, src.get(0).getSpace() > src.get(0).getCnt());
@@ -74,7 +76,7 @@ public class Core {
         return toSentence(sentence, src.subList(1, src.size()), src.get(0).getRightword());
     }
     @GetMapping
-    public List<Map<String, Object>> v1(String pureSrc) {
+    public List<Map<String, Object>> v1(String pureSrc, boolean export) {
         Map<Integer, List<List<Context>>> listMap = new HashMap<>();
         // 복수 토큰 문장은 나중에..
         var targetList = mapper.selectGenerationTarget(understand(pureSrc).stream().map(Toke::getN).toList()).stream().map(ContextMap::new).toList();
@@ -91,7 +93,8 @@ public class Core {
             if(li.isEmpty()) return;
             sentenceList.add(toSentence(new ArrayList<>(), li, li.get(li.size() - 1).getRightword()));
         }));
-        var res = sentenceList.stream().sorted(Comparator.comparing(item -> item.getContextPoint() * -1)).map(Sentence::getDto).toList();
+        // 일단 중복 제거로 퉁치지만 나중엔 아마 오래 걸리겠지 그땐 최적화해야된다
+        var res = sentenceList.stream().distinct().sorted(Comparator.comparing(item -> item.getContextPoint() * -1)).map(item -> item.getDto(export)).toList();
         return res.size() > 5 ? res.subList(0, 5) : res;
     }
 }
