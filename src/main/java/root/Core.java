@@ -3,13 +3,13 @@ package root;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import root.entmap.ContextMap;
 import root.plm.*;
-import root.plm.entity.Context;
+import root.plm.entity.Twoken;
 import root.plm.entity.Word;
 import root.service.ReplaceRepeatedChars;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/plm")
@@ -47,55 +47,92 @@ public class Core {
         sentenceList.sort(Comparator.comparing(item -> item.getContextPoint() * -1));
         return sentenceList.get(0);
     }
-    void generate(List<Context> sentence, List<ContextMap> targetList, List<List<Context>> generated, int last) {
+    void generate(List<UltronContext> sentence, List<UltronContext> targetList, List<List<UltronContext>> generated, int last, Map<Integer, List<UltronHistory>> historyList) {
         boolean match = false;
         for (var c: targetList) {
-            if(c.getLeftword() == last) {
+            if(c.getLeftword() == last && (historyList.get(sentence.size()) == null || !historyList.get(sentence.size()).contains(new UltronHistory(sentence.get(sentence.size() - 1).getLeftword(), c.getLeftword(), c.getRightword())))) {
                 match = true;
                 var clone = new ArrayList<>(sentence);
                 clone.add(c);
-                generate(clone, targetList.stream().filter(item -> item != c).toList(), generated, c.getRightword());
+                int size = clone.size();
+                if (size > 1) {
+                    historyList.computeIfAbsent(size - 1, k -> new ArrayList<>());
+                    historyList.get(size - 1).add(new UltronHistory(clone.get(size - 2).getLeftword(), c.getLeftword(), c.getRightword()));
+                }
+                generate(clone, targetList.stream().filter(item -> item != c).toList(), generated, c.getRightword(), historyList);
             }
         }
         if(!match) generated.add(sentence);
     }
-    Toke findToke(List<Context> src) {
-        return new Toke(StaticUtil.selectWord(src.get(0).getLeftword(), bank.wordList), 0, 0, src.get(0).getSpace() > src.get(0).getCnt());
-    }
-    Sentence toSentence(List<Toke> sentence, List<Context> src, int last) {
-        if(src.isEmpty()) {
-            sentence.add(new Toke(StaticUtil.selectWord(last, bank.wordList), 0, 0, false));
-            for (int i = 0; i < sentence.size() - 1; i++) {
-                Toke left = sentence.get(i);
-                Toke right = sentence.get(i + 1);
-                contextCore.rightContext(right, left, right, bank.contextList, bank.compoundList, bank.wordList, left.isRightSpace(), false);
-            }
-            return new Sentence(sentence, bank.contextList);
-        }
-        sentence.add(findToke(src));
-        return toSentence(sentence, src.subList(1, src.size()), src.get(0).getRightword());
-    }
+
     @GetMapping
     public List<Map<String, Object>> v1(String pureSrc, boolean export) {
-        Map<Integer, List<List<Context>>> listMap = new HashMap<>();
-        var targetList = mapper.selectGenerationTarget(understand(pureSrc).stream().map(Toke::getN).toList()).stream().map(ContextMap::new).toList();
-        // 가능한 연결 모두 찾는 제너래이트에서 한 번 느림
+        Map<Integer, List<List<UltronContext>>> listMap = new HashMap<>();
+        var targetList = mapper.selectGenerationTarget(understand(pureSrc).stream().map(Toke::getN).toList());
+        Map<Integer, List<UltronHistory>> historyList = new HashMap<>();
         targetList.forEach(item -> {
             var list = listMap.get(item.getLeftword());
             if(list == null) {
-                List<List<Context>> generated = new ArrayList<>();
+                List<List<UltronContext>> generated = new ArrayList<>();
                 listMap.put(item.getLeftword(), generated);
-                generate(new ArrayList<>(), targetList, generated, item.getLeftword());
+                generate(new ArrayList<>(), targetList, generated, item.getLeftword(), historyList);
             }
         });
-        List<Sentence> sentenceList = new ArrayList<>();
-        // 콘텍스트들 번호로 단어 꽂을 때 두 번 느림
+        List<UltronSentence> sentenceList = new ArrayList<>();
         listMap.keySet().forEach(item -> listMap.get(item).forEach(li -> {
             if(li.isEmpty()) return;
-            sentenceList.add(toSentence(new ArrayList<>(), li, li.get(li.size() - 1).getRightword()));
+            sentenceList.add(new UltronSentence(li));
         }));
-        // 일단 중복 제거로 퉁치지만 나중엔 아마 오래 걸리겠지 그땐 최적화해야된다
-        var res = sentenceList.stream().distinct().sorted(Comparator.comparing(item -> item.getContextPoint() * -1)).map(item -> item.getDto(export)).toList();
+        var res = sentenceList.stream()
+                .distinct().sorted(Comparator.comparing(item -> item.point * -1)).map(item -> item.toDto(export)).toList();
         return res.size() > 5 ? res.subList(0, 5) : res;
     }
 }
+
+class UltronContext implements Twoken {
+    int leftword;
+    int rightword;
+    String lw;
+    String rw;
+    int cnt;
+    int space;
+
+    @Override
+    public int getLeftword() {
+        return leftword;
+    }
+
+    @Override
+    public int getRightword() {
+        return rightword;
+    }
+}
+class UltronSentence extends ArrayList<UltronContext> {
+    final String export;
+    final int point; // 이게 토크 센텐스랑 계산이 다르기 때문에 문제가 된다면 토크 센텐스를 쓰는 방향으로 가야한다
+
+    UltronSentence(List<UltronContext> list) {
+        super(list);
+        export = get(0).lw.concat(stream().map(item -> (item.space > item.cnt ? " " : "").concat(item.rw)).collect(Collectors.joining()));
+        point = stream().mapToInt(item -> Math.max(item.space, item.cnt)).sum();
+    }
+
+    Map<String, Object> toDto(boolean e) {
+        Map<String, Object> dto = new HashMap<>();
+        dto.put("point", point);
+        dto.put("export", e ? export : this);
+        return dto;
+    }
+    @Override
+    public int hashCode() {
+        return size();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if(o instanceof UltronSentence sentence) return export.equals(sentence.export);
+        return false;
+    }
+}
+// 우선 같은 자리에 연속된 두개의 콘텍스트만 방지해보자, 필요하다면 같은 자리에 딱 하나의 콘텍스트 중복 방지도 가능하다
+record UltronHistory(int w0, int w1, int w2) {}
