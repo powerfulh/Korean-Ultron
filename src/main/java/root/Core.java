@@ -1,5 +1,7 @@
 package root;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Size;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -66,7 +68,7 @@ public class Core {
     }
 
     @GetMapping
-    public List<Map<String, Object>> v1(String pureSrc, boolean export) {
+    public List<Map<String, Object>> v1(@Valid @Size(min = 1, max = 18) String pureSrc, boolean export) {
         Map<Integer, List<List<UltronContext>>> listMap = new HashMap<>();
         var targetList = mapper.selectGenerationTarget(understand(pureSrc).stream().map(Toke::getN).toList());
         Map<Integer, List<UltronHistory>> historyList = new HashMap<>();

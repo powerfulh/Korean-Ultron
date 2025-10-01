@@ -7,12 +7,11 @@
 </head>
 <body>
 
-<!-- 상단 로고 영역 -->
 <header>
+    <div style="position: absolute; padding: 8px"><b>P</b>owerful small <b>L</b>anguage <b>M</b>odel</div>
     <img src="logo.png" alt="로고 이미지">
 </header>
 
-<!-- 메인 프롬프트 입력 + 출력 -->
 <main>
     <div class="container">
         <input
@@ -23,29 +22,27 @@
                 onkeypress="handleKeyPress(event)"
                 maxlength="15"
         >
-        <div class="output-box" id="outputBox">
-<!--            여기에 결과가 표시됩니다.-->
-        </div>
+        <div class="output-box" id="outputBox"></div>
     </div>
 </main>
 
-<!-- 하단 서비스 설명 -->
 <footer>
     매 입력은 이전 대화와 이어지지 않습니다 <br>
     최대 입력 제한은 15자 입니다
 </footer>
 
-<!-- 간단한 JS -->
 <script>
     function handleKeyPress(event) {
         if (event.key === 'Enter') {
             const input = document.getElementById('promptInput').value;
-            const output = document.getElementById('outputBox');
-            if (input.trim() !== '') {
-                output.textContent = `입력하신 내용: "${input}"`;
-            } else {
-                output.textContent = "아무것도 입력되지 않았습니다.";
-            }
+            if (input.trim() == '') return
+            const output = document.getElementById('outputBox')
+            output.textContent = 'Fetching.. ⌛'
+            fetch(`/plm?pureSrc=${input}&export=true`).then(res => {
+                if(res.ok) {
+                    res.json().then(list => output.textContent = list[0] ? list[0].export : 'Empty ⚠️')
+                } else output.textContent = res.status + ' ⚠️'
+            })
         }
     }
 </script>
