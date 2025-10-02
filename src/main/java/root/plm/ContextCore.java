@@ -36,10 +36,10 @@ public class ContextCore {
 //            if(left.getType().equals(zeroType) && right.getType().equals(thingType)) target.rightContext--; 만들 (0) 면 (어미) 를 우선하려고 썼는데 '만들면' 학결이 있길래 일단 그걸로 해결
         }
     }
-    public Toke rightContext(Toke target, Word left, Word right, List<Context> contextList, List<Compound> compoundList, List<Word> wordList, boolean space, boolean otherOption) {
+    public void rightContext(Toke target, Word left, Word right, List<Context> contextList, List<Compound> compoundList, List<Word> wordList, boolean space, boolean otherOption) {
         target.contextHistory.computeIfAbsent(left.getN(), k -> new ArrayList<>());
         var h = target.contextHistory.get(left.getN());
-        if(!h.isEmpty() && h.stream().anyMatch(item -> item.equals(right.getN()))) return null;
+        if(!h.isEmpty() && h.stream().anyMatch(item -> item.equals(right.getN()))) return;
         target.rightContext += contextPoint(contextList, left.getN(), right.getN(), space, h);
         smartStartBoost(left, right, target, space, target.rightContext < 1 && otherOption);
         target.rightContext *= left.getWord().length() + target.getWord().length();
@@ -53,7 +53,6 @@ public class ContextCore {
                 .findAny()
                 .ifPresent(compound ->
                         rightContext(target, StaticUtil.selectWord(compound.getRightword(), wordList), right, contextList, compoundList, wordList, space, false));
-        return target;
     }
     public Toke lengthRate(Toke target) {
         // 문맥이 없어 모든 분기가 탈락하고 마지막 놈만 잡히는 것을 방지하려고 최종적으로 후보의 길이가 긴 녀석을 고르도록 한다
