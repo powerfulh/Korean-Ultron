@@ -23,7 +23,7 @@ public class ContextCore {
     /**
      * 더 빠른 초기 시드 구성을 위한 조정
      */
-    void smartStartBoost(Word left, Word right, Toke target, boolean space, boolean otherOption) {
+    void smartStartBoost(Word left, Word right, Toke target, boolean space, boolean otherOption, boolean leftBonus) {
         if(left.getType().equals(zeroType) && right.getType().equals(supportType) && !right.getN().equals(191)) target.rightContext--;
         if(space && right.getType().equals(afterType)) target.rightContext--;
         if(!space) {
@@ -35,24 +35,25 @@ public class ContextCore {
             if(!left.getN().equals(StaticUtil.opener) && right.getType().equals("감탄사")) target.rightContext--;
             if(left.getType().equals(zeroType) && right.getType().equals(thingType)) target.rightContext--;
         }
+        if(leftBonus) target.rightContext++;
     }
-    public void rightContext(Toke target, Word left, Word right, List<Context> contextList, List<Compound> compoundList, List<Word> wordList, boolean space, boolean otherOption) {
+    public void rightContext(Toke target, Word left, Word right, List<Context> contextList, List<Compound> compoundList, List<Word> wordList, boolean space, boolean otherOption, int leftCompoundLength) {
         target.contextHistory.computeIfAbsent(left.getN(), k -> new ArrayList<>());
         var h = target.contextHistory.get(left.getN());
         if(!h.isEmpty() && h.stream().anyMatch(item -> item.equals(right.getN()))) return;
         target.rightContext += contextPoint(contextList, left.getN(), right.getN(), space, h);
-        smartStartBoost(left, right, target, space, target.rightContext < 1 && otherOption);
+        smartStartBoost(left, right, target, space, target.rightContext < 1 && otherOption, left.getWord().length() < leftCompoundLength);
         target.rightContext *= left.getWord().length() + target.getWord().length();
         compoundList.stream()
                 .filter(item -> right.getN().equals(item.getWord()))
                 .findAny()
                 .ifPresent(compound ->
-                        rightContext(target, left, StaticUtil.selectWord(compound.getLeftword(), wordList), contextList, compoundList, wordList, space, false));
+                        rightContext(target, left, StaticUtil.selectWord(compound.getLeftword(), wordList), contextList, compoundList, wordList, space, false, 0));
         compoundList.stream()
                 .filter(item -> left.getN().equals(item.getWord()))
                 .findAny()
                 .ifPresent(compound ->
-                        rightContext(target, StaticUtil.selectWord(compound.getRightword(), wordList), right, contextList, compoundList, wordList, space, false));
+                        rightContext(target, StaticUtil.selectWord(compound.getRightword(), wordList), right, contextList, compoundList, wordList, space, false, left.getWord().length()));
     }
     public Toke lengthRate(Toke target) {
         // 문맥이 없어 모든 분기가 탈락하고 마지막 놈만 잡히는 것을 방지하려고 최종적으로 후보의 길이가 긴 녀석을 고르도록 한다
