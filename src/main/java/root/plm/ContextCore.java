@@ -33,7 +33,7 @@ public class ContextCore {
             if(leftWrapA && right.getType().equals(supportType)) target.rightContext++;
             if(leftWrapA && right.getType().equals("1")) target.rightContext--;
             if(!left.getN().equals(StaticUtil.opener) && right.getType().equals("감탄사")) target.rightContext--;
-//            if(left.getType().equals(zeroType) && right.getType().equals(thingType)) target.rightContext--; 만들 (0) 면 (어미) 를 우선하려고 썼는데 '만들면' 학결이 있길래 일단 그걸로 해결
+            if(left.getType().equals(zeroType) && right.getType().equals(thingType)) target.rightContext--;
         }
     }
     public void rightContext(Toke target, Word left, Word right, List<Context> contextList, List<Compound> compoundList, List<Word> wordList, boolean space, boolean otherOption) {
