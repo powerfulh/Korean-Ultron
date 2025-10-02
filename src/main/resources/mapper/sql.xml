@@ -24,14 +24,14 @@
             and container.opener in <foreach collection="list" item="item" open="(" separator="," close=")">#{item}</foreach>
             union all
             select c.leftword, c.rightword, c.cnt, c.space, os.n = uc.sentence pri, -- 근데 널이 진짜 있는지 몰라서 궁금해서 일부러 널처리 안했다
-            row_number() over (partition by uc.sentence, uc.context, pri order by uc.i) rn
+            row_number() over (partition by uc.sentence, uc.context, pri, container.i order by uc.i) rn
             from plm_ultron_context uc, plm_context c, (
-            select uc.sentence from plm_ultron_context uc, plm_context c, (
-            <foreach collection="list" item="item" separator=" union all " index="i">select #{item} n, #{i} i</foreach>
-            ) p
-            where uc.context = c.n
-            and c.rightword = p.n
-            group by uc.sentence, p.i
+                select uc.sentence, p.i from plm_ultron_context uc, plm_context c, (
+                <foreach collection="list" item="item" separator=" union all " index="i">select #{item} n, #{i} i</foreach>
+                ) p
+                where uc.context = c.n
+                and c.rightword = p.n
+                group by uc.sentence, p.i
             ) container left join plm_ultron_sentence os on container.sentence = os.target
             where (os.n = uc.sentence or container.sentence = uc.sentence)
             and uc.context = c.n
