@@ -13,15 +13,18 @@
     <select id="selectContext" resultType="map">select * from plm_context c</select>
     <select id="selectCompound" resultType="map">select * from llm_word_compound c</select>
     <select id="selectGenerationTarget" resultType="root.UltronContext">
-        select sq.leftword, sq.rightword, lw.word lw, rw.word rw, sq.cnt, sq.space from llm_word lw, llm_word rw, (
-            select c.leftword, c.rightword, c.cnt, c.space, os.n = uc.sentence pri -- 0이면 응답이 있는 컨태이너들, 널이면 응답 없는 컨태이너들
-            from plm_ultron_context uc, plm_context c, plm_ultron_sentence ins
-            left join plm_ultron_sentence os on ins.n = os.target
-            where (os.n = uc.sentence or ins.n = uc.sentence)
+        select sq.leftword, sq.rightword, lw.word lw, rw.word rw, sq.cnt, sq.space
+        from llm_word lw, llm_word rw, (
+            select c.leftword, c.rightword, c.cnt, c.space, os.n = uc.sentence pri, -- 0이면 응답이 있는 컨태이너들, 널이면 응답 없는 컨태이너들
+            row_number() over (partition by uc.sentence, uc.context, pri order by uc.i) rn
+            from plm_ultron_context uc, plm_context c, plm_ultron_sentence container
+            left join plm_ultron_sentence os on container.n = os.target
+            where (os.n = uc.sentence or container.n = uc.sentence)
             and uc.context = c.n
-            and ins.opener in <foreach collection="list" item="item" open="(" separator="," close=")">#{item}</foreach>
+            and container.opener in <foreach collection="list" item="item" open="(" separator="," close=")">#{item}</foreach>
             union all
-            select c.leftword, c.rightword, c.cnt, c.space, os.n = uc.sentence pri -- 근데 널이 진짜 있는지 몰라서 궁금해서 일부러 널처리 안했다
+            select c.leftword, c.rightword, c.cnt, c.space, os.n = uc.sentence pri, -- 근데 널이 진짜 있는지 몰라서 궁금해서 일부러 널처리 안했다
+            row_number() over (partition by uc.sentence, uc.context, pri order by uc.i) rn
             from plm_ultron_context uc, plm_context c, (
             select uc.sentence from plm_ultron_context uc, plm_context c, (
             <foreach collection="list" item="item" separator=" union all " index="i">select #{item} n, #{i} i</foreach>
@@ -29,11 +32,12 @@
             where uc.context = c.n
             and c.rightword = p.n
             group by uc.sentence, p.i
-            ) ins left join plm_ultron_sentence os on ins.sentence = os.target
-            where (os.n = uc.sentence or ins.sentence = uc.sentence)
+            ) container left join plm_ultron_sentence os on container.sentence = os.target
+            where (os.n = uc.sentence or container.sentence = uc.sentence)
             and uc.context = c.n
         ) sq
         where sq.leftword = lw.n and sq.rightword = rw.n
-        order by sq.pri desc
+        group by sq.leftword, sq.rightword, sq.rn
+        order by sq.pri desc, count(*) desc
     </select>
 </mapper>
