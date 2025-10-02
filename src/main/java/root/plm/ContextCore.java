@@ -13,6 +13,7 @@ public class ContextCore {
     final String afterType = "어미";
     final String supportType = "조사";
     final String zeroType = "0";
+    final String thingType = "무엇";
     final List<Integer> issue29except = List.of(2506, 105, 3876);
 
     int contextPoint(List<Context> contextList, int left, int right, boolean space, List<Integer> history) {
@@ -27,10 +28,12 @@ public class ContextCore {
         if(space && right.getType().equals(afterType)) target.rightContext--;
         if(!space) {
             if(left.getType().equals(afterType) && (right.getType().equals(supportType) || right.getType().equals(zeroType)) && !issue29except.contains(right.getN()) && otherOption) throw new PlmException("Maybe wrong", left.getWord() + "+" + target.getWord());
-            final boolean leftWrapA = left.getType().equals("무엇") || left.getType().equals("대명사");
+            if(left.getType().equals(afterType) && right.getType().equals(thingType)) target.rightContext--;
+            final boolean leftWrapA = left.getType().equals(thingType) || left.getType().equals("대명사");
             if(leftWrapA && right.getType().equals(supportType)) target.rightContext++;
             if(leftWrapA && right.getType().equals("1")) target.rightContext--;
             if(!left.getN().equals(StaticUtil.opener) && right.getType().equals("감탄사")) target.rightContext--;
+//            if(left.getType().equals(zeroType) && right.getType().equals(thingType)) target.rightContext--; 만들 (0) 면 (어미) 를 우선하려고 썼는데 '만들면' 학결이 있길래 일단 그걸로 해결
         }
     }
     public Toke rightContext(Toke target, Word left, Word right, List<Context> contextList, List<Compound> compoundList, List<Word> wordList, boolean space, boolean otherOption) {
@@ -38,7 +41,7 @@ public class ContextCore {
         var h = target.contextHistory.get(left.getN());
         if(!h.isEmpty() && h.stream().anyMatch(item -> item.equals(right.getN()))) return null;
         target.rightContext += contextPoint(contextList, left.getN(), right.getN(), space, h);
-        smartStartBoost(left, right, target, space, otherOption);
+        smartStartBoost(left, right, target, space, target.rightContext < 1 && otherOption);
         target.rightContext *= left.getWord().length() + target.getWord().length();
         compoundList.stream()
                 .filter(item -> right.getN().equals(item.getWord()))
