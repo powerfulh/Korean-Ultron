@@ -38,7 +38,7 @@ public class UnderstandTarget implements Cloneable {
             } else return null;
         }
         int nextSpace = 0;
-        final int consumedLength = word.getWord().length() + ignored;
+        final int consumedLength = word.getWord().length() + ignored - wordSpace;
         while (right.length() > consumedLength + nextSpace && right.charAt(consumedLength + nextSpace) == ' ') nextSpace++;
         return new Toke(word, currentCut, currentCut + consumedLength + nextSpace, 0 < nextSpace);
     }
