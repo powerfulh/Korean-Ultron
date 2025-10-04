@@ -13,3 +13,8 @@ spring:
 
 mybatis:
   mapper-locations: classpath:mapper/**/*.xml
+
+logging:
+  pattern:
+    console: "%-5level %logger{36} - %msg [%thread]%n"
+#    console: "%d{MMdd HH:mm:ss} %-5level %logger{36} - %msg [%thread]%n"
