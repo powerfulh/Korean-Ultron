@@ -38,6 +38,6 @@
         ) sq
         where sq.leftword = lw.n and sq.rightword = rw.n
         group by sq.leftword, sq.rightword, sq.rn
-        order by sq.pri desc, count(*) desc, sq.i -- pri 는 맥스로 안 뽑으면 1인데 밀리는 경우도 있을 것 같은데 아직 문제된 적은 없어서 주석만 달아놓는다
+        order by pri desc, count(*) desc, sq.i
     </select>
 </mapper>
