@@ -98,6 +98,7 @@ class UltronContext implements Twoken {
     String rw;
     int cnt;
     int space;
+    int pri;
 
     @Override
     public int getLeftword() {
@@ -108,6 +109,10 @@ class UltronContext implements Twoken {
     public int getRightword() {
         return rightword;
     }
+
+    int getPoint() {
+        return Math.max(space, cnt) + pri;
+    }
 }
 class UltronSentence extends ArrayList<UltronContext> {
     final String export;
@@ -116,7 +121,8 @@ class UltronSentence extends ArrayList<UltronContext> {
     UltronSentence(List<UltronContext> list) {
         super(list);
         export = get(0).lw.concat(stream().map(item -> (item.space > item.cnt ? " " : "").concat(item.rw)).collect(Collectors.joining()));
-        point = stream().mapToInt(item -> Math.max(item.space, item.cnt)).sum();
+//        point = stream().mapToInt(item -> Math.max(item.space, item.cnt)).sum();
+        point = stream().mapToInt(UltronContext::getPoint).sum();
     }
 
     Map<String, Object> toDto(boolean e) {
