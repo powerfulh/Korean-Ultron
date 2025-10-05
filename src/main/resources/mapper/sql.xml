@@ -39,5 +39,6 @@
         where sq.leftword = lw.n and sq.rightword = rw.n
         group by sq.leftword, sq.rightword, sq.rn
         order by pri desc, count(*) desc, sq.i
+        limit 100
     </select>
 </mapper>
