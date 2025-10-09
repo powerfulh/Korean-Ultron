@@ -16,6 +16,8 @@ public class Toke implements Word {
     final Map<Integer, List<Integer>> contextHistory = new HashMap<>();
     @JsonIgnore
     public boolean otherOption;
+    // Ultron only
+    Integer rightword; // 마지막 토크는 당연히 널이다, 클로저로 활용 가능하려나?
 
     public Toke(Word llmWord, int start, int end, boolean rightSpace) {
         src = llmWord;

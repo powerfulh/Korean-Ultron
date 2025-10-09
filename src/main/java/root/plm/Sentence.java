@@ -16,15 +16,15 @@ public class Sentence extends ArrayList<Toke> {
         if(p == 0) p = get(0).getWord().length() - 1; // 오프너도 마찬가지로 오프너 콘텍스트가 없더라도 길이가 긴 것부터 잡게 해보자
         contextPoint = p + list.stream().mapToInt(Toke::getRightContext).sum();
         export = stream().map(item -> item.isRightSpace() ? item.getWord() + " " : item.getWord()).collect(Collectors.joining());
-    }
-
-    public <T extends Context> T getContext(int li, int ri, List<T> list) {
-        return list.stream().filter(StaticUtil.getContextFinder(get(li).getN(), get(ri).getN())).findAny().orElse(null);
+        for (int i = 0; i < size() - 1; i++) {
+            get(i).rightword = get(i + 1).getN();
+        }
     }
 
     public int getContextPoint() {
         return contextPoint;
     }
+    @SuppressWarnings("unused")
     public Map<String, Object> getDto(boolean export) {
         Map<String, Object> dto = new HashMap<>();
         dto.put("point", contextPoint);
