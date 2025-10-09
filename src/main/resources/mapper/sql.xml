@@ -27,10 +27,11 @@
             row_number() over (partition by ifnull(os.n, container.sentence), uc.context, pri, container.i order by uc.i) rn
             from plm_ultron_context uc, plm_context c, (
                 select uc.sentence, p.i from plm_ultron_context uc, plm_context c, (
-                <foreach collection="list" item="item" separator=" union all " index="i">select #{item.n} n, #{i} i</foreach>
+                <foreach collection="list" item="item" separator=" union all " index="i">select #{item.n} n, #{i} i, #{item.rightword} r</foreach>
                 ) p
                 where uc.context = c.n
-                and c.rightword = p.n
+                and c.leftword = p.n
+                and c.rightword = p.r
                 group by uc.sentence, p.i
             ) container left join plm_ultron_sentence os on container.sentence = os.target
             where ifnull(os.n, container.sentence) = uc.sentence
