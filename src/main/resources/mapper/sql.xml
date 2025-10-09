@@ -15,15 +15,7 @@
     <select id="selectGenerationTarget" resultType="root.UltronContext">
         select sq.leftword, sq.rightword, lw.word lw, rw.word rw, sq.cnt, sq.space, max(sq.pri) pri, count(*) rcnt
         from llm_word lw, llm_word rw, (
-            select c.leftword, c.rightword, c.cnt, c.space, uc.i, os.n = uc.sentence pri, -- 0이면 응답이 있는 컨태이너들, 널이면 응답 없는 컨태이너들
-            row_number() over (partition by ifnull(os.n, container.n), uc.context, pri order by uc.i) rn
-            from plm_ultron_context uc, plm_context c, plm_ultron_sentence container
-            left join plm_ultron_sentence os on container.n = os.target
-            where ifnull(os.n, container.n) = uc.sentence
-            and uc.context = c.n
-            and container.opener in <foreach collection="list" item="item" open="(" separator="," close=")">#{item.n}</foreach>
-            union all
-            select c.leftword, c.rightword, c.cnt, c.space, uc.i, os.n = uc.sentence pri, -- 근데 널이 진짜 있는지 몰라서 궁금해서 일부러 널처리 안했다
+            select c.leftword, c.rightword, c.cnt, c.space, uc.i, os.n = uc.sentence pri,
             row_number() over (partition by ifnull(os.n, container.sentence), uc.context, pri, container.i order by uc.i) rn
             from plm_ultron_context uc, plm_context c, (
                 select uc.sentence, p.i from plm_ultron_context uc, plm_context c, (
@@ -40,6 +32,6 @@
         where sq.leftword = lw.n and sq.rightword = rw.n
         group by sq.leftword, sq.rightword, sq.rn
         order by pri desc, rcnt desc, sq.i
-        limit 100
+        -- limit 100
     </select>
 </mapper>
