@@ -13,7 +13,7 @@
     <select id="selectContext" resultType="map">select * from plm_context c</select>
     <select id="selectCompound" resultType="map">select * from llm_word_compound c</select>
     <select id="selectGenerationTarget" resultType="root.UltronContext">
-        select sq.leftword, sq.rightword, lw.word lw, rw.word rw, sq.cnt, sq.space, max(sq.pri) pri
+        select sq.leftword, sq.rightword, lw.word lw, rw.word rw, sq.cnt, sq.space, max(sq.pri) pri, count(*) rcnt
         from llm_word lw, llm_word rw, (
             select c.leftword, c.rightword, c.cnt, c.space, uc.i, os.n = uc.sentence pri, -- 0이면 응답이 있는 컨태이너들, 널이면 응답 없는 컨태이너들
             row_number() over (partition by ifnull(os.n, container.n), uc.context, pri order by uc.i) rn
@@ -39,7 +39,7 @@
         ) sq
         where sq.leftword = lw.n and sq.rightword = rw.n
         group by sq.leftword, sq.rightword, sq.rn
-        order by pri desc, count(*) desc, sq.i
+        order by pri desc, rcnt desc, sq.i
         limit 100
     </select>
 </mapper>
