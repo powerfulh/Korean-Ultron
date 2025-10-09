@@ -21,13 +21,13 @@
             left join plm_ultron_sentence os on container.n = os.target
             where ifnull(os.n, container.n) = uc.sentence
             and uc.context = c.n
-            and container.opener in <foreach collection="list" item="item" open="(" separator="," close=")">#{item}</foreach>
+            and container.opener in <foreach collection="list" item="item" open="(" separator="," close=")">#{item.n}</foreach>
             union all
             select c.leftword, c.rightword, c.cnt, c.space, uc.i, os.n = uc.sentence pri, -- 근데 널이 진짜 있는지 몰라서 궁금해서 일부러 널처리 안했다
             row_number() over (partition by ifnull(os.n, container.sentence), uc.context, pri, container.i order by uc.i) rn
             from plm_ultron_context uc, plm_context c, (
                 select uc.sentence, p.i from plm_ultron_context uc, plm_context c, (
-                <foreach collection="list" item="item" separator=" union all " index="i">select #{item} n, #{i} i</foreach>
+                <foreach collection="list" item="item" separator=" union all " index="i">select #{item.n} n, #{i} i</foreach>
                 ) p
                 where uc.context = c.n
                 and c.rightword = p.n

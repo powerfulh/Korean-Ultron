@@ -70,7 +70,7 @@ public class Core {
     @GetMapping
     public List<Map<String, Object>> v1(@Valid @Size(min = 1, max = 18) String pureSrc, boolean export) {
         Map<Integer, List<List<UltronContext>>> listMap = new HashMap<>();
-        var targetList = mapper.selectGenerationTarget(understand(pureSrc).stream().map(Toke::getN).toList());
+        var targetList = mapper.selectGenerationTarget(understand(pureSrc));
         Map<Integer, List<UltronHistory>> historyList = new HashMap<>();
         targetList.forEach(item -> {
             var list = listMap.get(item.getLeftword());
