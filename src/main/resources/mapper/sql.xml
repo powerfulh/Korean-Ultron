@@ -19,7 +19,7 @@
             row_number() over (partition by ifnull(os.n, container.n), uc.context, pri order by uc.i) rn
             from plm_ultron_context uc, plm_context c, plm_ultron_sentence container
             left join plm_ultron_sentence os on container.n = os.target
-            where (os.n = uc.sentence or container.n = uc.sentence)
+            where ifnull(os.n, container.n) = uc.sentence
             and uc.context = c.n
             and container.opener in <foreach collection="list" item="item" open="(" separator="," close=")">#{item}</foreach>
             union all
@@ -33,7 +33,7 @@
                 and c.rightword = p.n
                 group by uc.sentence, p.i
             ) container left join plm_ultron_sentence os on container.sentence = os.target
-            where (os.n = uc.sentence or container.sentence = uc.sentence)
+            where ifnull(os.n, container.sentence) = uc.sentence
             and uc.context = c.n
         ) sq
         where sq.leftword = lw.n and sq.rightword = rw.n
