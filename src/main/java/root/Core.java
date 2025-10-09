@@ -99,6 +99,7 @@ class UltronContext implements Twoken {
     int cnt;
     int space;
     int pri;
+    int rcnt;
 
     @Override
     public int getLeftword() {
@@ -111,7 +112,7 @@ class UltronContext implements Twoken {
     }
 
     int getPoint() {
-        return Math.max(space, cnt) + pri;
+        return pri * rcnt;
     }
 }
 class UltronSentence extends ArrayList<UltronContext> {
