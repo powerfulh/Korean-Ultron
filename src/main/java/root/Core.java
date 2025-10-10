@@ -21,8 +21,6 @@ public class Core {
     final ContextCore contextCore;
     final SqlMapper mapper;
 
-    final List<Integer> closer = List.of(184); // 임시, 유효하다면 정식으로 데이터화 하자
-
     public Core(Bank bank, ReplaceRepeatedChars replaceRepeatedChars, ContextCore contextCore, SqlMapper mapper) {
         this.bank = bank;
         this.replaceRepeatedChars = replaceRepeatedChars;
@@ -63,15 +61,10 @@ public class Core {
                     historyList.computeIfAbsent(size - 1, k -> new ArrayList<>());
                     historyList.get(size - 1).add(new UltronHistory(clone.get(size - 2).getLeftword(), c.getLeftword(), c.getRightword()));
                 }
-                if(closer.contains(c.getRightword())) {
-                    c.close = true;
-                    generated.add(new ArrayList<>(clone)); // 즉시 닫고 후보 문장화 (정식 편입 고려 중)
-                }
                 generate(clone, targetList.stream().filter(item -> item != c).toList(), generated, c.getRightword(), historyList);
             }
         }
-        // 마지막 문맥이 닫혔으면 이미 위 재귀에서 문장화 됐음
-        if(!match && !sentence.get(sentence.size() - 1).close) generated.add(sentence);
+        if(!match) generated.add(sentence);
     }
 
     @GetMapping
@@ -107,7 +100,6 @@ class UltronContext implements Twoken {
     int space;
     int pri;
     int rcnt;
-    boolean close; // 임시
 
     @Override
     public int getLeftword() {
@@ -130,7 +122,7 @@ class UltronSentence extends ArrayList<UltronContext> {
     UltronSentence(List<UltronContext> list) {
         super(list);
         export = get(0).lw.concat(stream().map(item -> (item.space > item.cnt ? " " : "").concat(item.rw)).collect(Collectors.joining()));
-        point = stream().mapToInt(UltronContext::getPoint).sum() + (get(size() - 1).close ? Math.max(get(size() - 1).cnt, get(size() - 1).space) * size() : 0);
+        point = stream().mapToInt(UltronContext::getPoint).sum();
     }
 
     Map<String, Object> toDto(boolean e) {
