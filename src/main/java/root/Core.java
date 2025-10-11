@@ -76,7 +76,7 @@ public class Core {
     @GetMapping
     public List<Map<String, Object>> v1(@Valid @Size(min = 1, max = 18) String pureSrc, boolean export) {
         Map<Integer, List<List<UltronContext>>> listMap = new HashMap<>();
-        var targetList = mapper.selectGenerationTarget(understand(pureSrc));
+        var targetList = mapper.selectGenerationTarget(understand(pureSrc), 50 + pureSrc.length());
         targetList.forEach(item -> {
             Map<Integer, List<UltronHistory>> historyList = new HashMap<>(); // 원랜 공통이였는데 억울하게 탈락되는 기대 문장이 생겨서 오프너 별로 내렸다 251011
             var list = listMap.get(item.getLeftword());

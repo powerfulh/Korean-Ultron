@@ -13,6 +13,6 @@ public interface SqlMapper {
     List<Map<String, Object>> selectSymbolWord();
     List<Map<String, Object>> selectContext();
     List<Map<String, Object>> selectCompound();
-    List<UltronContext> selectGenerationTarget(List<Toke> list);
+    List<UltronContext> selectGenerationTarget(List<Toke> list, int limit);
     List<ConsumeContext> selectConsumer();
 }

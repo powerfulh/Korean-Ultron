@@ -31,8 +31,7 @@
         ) sq
         where sq.leftword = lw.n and sq.rightword = rw.n
         group by sq.leftword, sq.rightword, sq.rn
-        order by pri desc, rcnt desc, sq.i
-        -- limit 100
+        order by pri desc, rcnt desc, sq.i limit #{limit}
     </select>
     <select id="selectConsumer" resultType="root.mind.ConsumeContext">
         -- 이걸 위 쿼리에서 레프트 조인을 할 까 메모리에 올려놓고 쓸 까 정말 많은 고민을 했다
