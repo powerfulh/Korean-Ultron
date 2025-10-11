@@ -89,7 +89,7 @@ public class Core {
         List<UltronSentence> sentenceList = new ArrayList<>();
         listMap.keySet().forEach(item -> listMap.get(item).forEach(li -> {
             if(li.isEmpty()) return;
-            sentenceList.add(new UltronSentence(li));
+            sentenceList.add(new UltronSentence(li, consumerMap));
         }));
         var res = sentenceList.stream()
                 .distinct().sorted(Comparator.comparing(item -> item.point * -1)).map(item -> item.toDto(export)).toList();
@@ -124,12 +124,21 @@ class UltronContext implements Twoken {
 }
 class UltronSentence extends ArrayList<UltronContext> {
     final String export;
-    final int point; // 이게 토크 센텐스랑 계산이 다르기 때문에 문제가 된다면 토크 센텐스를 쓰는 방향으로 가야한다
+    final int point;
 
-    UltronSentence(List<UltronContext> list) {
+    UltronSentence(List<UltronContext> list, Map<Integer, List<Integer>> consumerMap) {
         super(list);
         export = get(0).lw.concat(stream().map(item -> (item.space > item.cnt ? " " : "").concat(item.rw)).collect(Collectors.joining()));
-        point = stream().mapToInt(UltronContext::getPoint).sum();
+        int penalty = 0;
+        for (int i = 0; i < size(); i++) {
+            final int current = get(i).context;
+            if (get(i).pri == 1 || !consumerMap.containsKey(current)) continue;
+            if(subList(0, i + 1).stream().noneMatch(item -> consumerMap.get(current).contains(item.context))) {
+                penalty = i + 1;
+                break;
+            }
+        }
+        point = stream().mapToInt(UltronContext::getPoint).sum() - penalty;
     }
 
     Map<String, Object> toDto(boolean e) {
