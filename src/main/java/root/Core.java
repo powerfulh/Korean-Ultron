@@ -21,11 +21,17 @@ public class Core {
     final ContextCore contextCore;
     final SqlMapper mapper;
 
+    final Map<Integer, List<Integer>> consumerMap = new HashMap<>();
+
     public Core(Bank bank, ReplaceRepeatedChars replaceRepeatedChars, ContextCore contextCore, SqlMapper mapper) {
         this.bank = bank;
         this.replaceRepeatedChars = replaceRepeatedChars;
         this.contextCore = contextCore;
         this.mapper = mapper;
+        mapper.selectConsumer().forEach(item -> {
+            consumerMap.computeIfAbsent(item.getMer(), k -> new ArrayList<>());
+            consumerMap.get(item.getMer()).add(item.getMable());
+        });
     }
 
     Sentence understand(String pureSrc) {
@@ -100,6 +106,7 @@ class UltronContext implements Twoken {
     int space;
     int pri;
     int rcnt;
+    int context;
 
     @Override
     public int getLeftword() {

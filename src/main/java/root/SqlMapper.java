@@ -1,6 +1,7 @@
 package root;
 
 import org.apache.ibatis.annotations.Mapper;
+import root.mind.ConsumeContext;
 import root.plm.Toke;
 
 import java.util.List;
@@ -13,4 +14,5 @@ public interface SqlMapper {
     List<Map<String, Object>> selectContext();
     List<Map<String, Object>> selectCompound();
     List<UltronContext> selectGenerationTarget(List<Toke> list);
+    List<ConsumeContext> selectConsumer();
 }
