@@ -129,16 +129,19 @@ class UltronSentence extends ArrayList<UltronContext> {
     UltronSentence(List<UltronContext> list, Map<Integer, List<Integer>> consumerMap) {
         super(list);
         export = get(0).lw.concat(stream().map(item -> (item.space > item.cnt ? " " : "").concat(item.rw)).collect(Collectors.joining()));
-        int penalty = 0;
+        int basic = 0, penalty = 0;
         for (int i = 0; i < size(); i++) {
-            final int current = get(i).context;
-            if (get(i).pri == 1 || !consumerMap.containsKey(current)) continue;
-            if(subList(0, i + 1).stream().noneMatch(item -> consumerMap.get(current).contains(item.context))) {
-                penalty = i + 1;
-                break;
+            final var current = get(i);
+            basic += current.getPoint();
+            // ~Basic
+            final int cn = get(i).context;
+            if (get(i).pri != 1 && consumerMap.containsKey(cn)) {
+                if(subList(0, i + 1).stream().noneMatch(item -> consumerMap.get(cn).contains(item.context))) penalty = i + 1;
             }
+            // ~Penalty
+
         }
-        point = stream().mapToInt(UltronContext::getPoint).sum() - penalty;
+        point = basic - penalty;
     }
 
     Map<String, Object> toDto(boolean e) {
