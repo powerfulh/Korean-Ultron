@@ -15,4 +15,5 @@ public interface SqlMapper {
     List<Map<String, Object>> selectCompound();
     List<UltronContext> selectGenerationTarget(List<Toke> list, int limit);
     List<ConsumeContext> selectConsumer();
+    List<Map<String, Integer>> selectCutterPattern();
 }
