@@ -70,10 +70,11 @@ public class Core {
                     historyList.computeIfAbsent(size - 1, k -> new ArrayList<>());
                     historyList.get(size - 1).add(new UltronHistory(clone.get(size - 2).getLeftword(), c.getLeftword(), c.getRightword()));
                 }
+                if(c.rightword == 184) generated.add(new ArrayList<>(clone));
                 generate(clone, targetList.stream().filter(item -> item != c).toList(), generated, c.getRightword(), historyList);
             }
         }
-        if(!match) generated.add(sentence);
+        if(!match && sentence.get(sentence.size() - 1).rightword != 184) generated.add(sentence);
     }
 
     @GetMapping
@@ -131,6 +132,12 @@ class UltronSentence extends ArrayList<UltronContext> {
     final int point;
     final int bonusLog;
 
+    int cutterBonus(List<Integer> lastPattern, Map<List<Integer>, Map<Integer, Integer>> pattern, int cutter) {
+        if(lastPattern.isEmpty()) return 0;
+        var existLastPattern = pattern.get(lastPattern);
+        // 확률이 아닌 누적 횟수라 점수대가 크지 않을까 하는 걱정이 있다
+        return Objects.requireNonNullElse(existLastPattern.get(cutter), 0) * (lastPattern.size() + (cutter == CutterPattern.closer ? 1 : 0));
+    }
     UltronSentence(List<UltronContext> list, Map<Integer, List<Integer>> consumerMap, Map<List<Integer>, Map<Integer, Integer>> pattern) {
         super(list);
         export = get(0).lw.concat(stream().map(item -> (item.space > item.cnt ? " " : "").concat(item.rw)).collect(Collectors.joining()));
@@ -147,17 +154,17 @@ class UltronSentence extends ArrayList<UltronContext> {
             }
             // ~Penalty
             if(bonusClose || current.rcutter == null) continue;
-            final var lastSub = subList(0, i);
-            final var lastPattern = lastSub.stream().filter(item -> item.rcutter != null).map(item -> item.rcutter).toList();
-            if(lastPattern.isEmpty()) continue; // 첫번째 커터는 넘어감
-            var existLastPattern = pattern.get(lastPattern);
-            if(existLastPattern == null) {
+            try {
+                final var lastSub = subList(0, i);
+                final var lastPattern = lastSub.stream().filter(item -> item.rcutter != null).map(item -> item.rcutter).toList();
+                bonus += cutterBonus(lastPattern, pattern, current.rcutter);
+            } catch (NullPointerException e) {
                 bonusClose = true;
-                continue;
             }
-            // 확률이 아닌 누적 점수라 점수대가 크지 않을까 하는 걱정이 있다
-            bonus += Objects.requireNonNullElse(existLastPattern.get(current.rcutter), 0) * lastPattern.size();
         }
+        try { // 클로서 보너스
+            bonus += cutterBonus(stream().filter(item -> item.rcutter != null).map(item -> item.rcutter).toList(), pattern, CutterPattern.closer);
+        } catch (NullPointerException ignored) {}
         point = basic - penalty + bonus;
         bonusLog = bonus;
     }
