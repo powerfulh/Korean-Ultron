@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Size;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import root.mind.CutterPattern;
 import root.plm.*;
 import root.plm.entity.Twoken;
 import root.plm.entity.Word;
@@ -22,6 +23,7 @@ public class Core {
     final SqlMapper mapper;
 
     final Map<Integer, List<Integer>> consumerMap = new HashMap<>();
+    final Map<List<Integer>, Map<Integer, Integer>> cutterPattern;
 
     public Core(Bank bank, ReplaceRepeatedChars replaceRepeatedChars, ContextCore contextCore, SqlMapper mapper) {
         this.bank = bank;
@@ -32,6 +34,7 @@ public class Core {
             consumerMap.computeIfAbsent(item.getMer(), k -> new ArrayList<>());
             consumerMap.get(item.getMer()).add(item.getMable());
         });
+        cutterPattern = new CutterPattern(mapper.selectCutterPattern()).getMap();
     }
 
     Sentence understand(String pureSrc) {
@@ -89,7 +92,7 @@ public class Core {
         List<UltronSentence> sentenceList = new ArrayList<>();
         listMap.keySet().forEach(item -> listMap.get(item).forEach(li -> {
             if(li.isEmpty()) return;
-            sentenceList.add(new UltronSentence(li, consumerMap));
+            sentenceList.add(new UltronSentence(li, consumerMap, cutterPattern));
         }));
         var res = sentenceList.stream()
                 .distinct().sorted(Comparator.comparing(item -> item.point * -1)).map(item -> item.toDto(export)).toList();
@@ -107,6 +110,7 @@ class UltronContext implements Twoken {
     int pri;
     int rcnt;
     int context;
+    boolean rcutter;
 
     @Override
     public int getLeftword() {
@@ -126,20 +130,26 @@ class UltronSentence extends ArrayList<UltronContext> {
     final String export;
     final int point;
 
-    UltronSentence(List<UltronContext> list, Map<Integer, List<Integer>> consumerMap) {
+    UltronSentence(List<UltronContext> list, Map<Integer, List<Integer>> consumerMap, Map<List<Integer>, Map<Integer, Integer>> pattern) {
         super(list);
         export = get(0).lw.concat(stream().map(item -> (item.space > item.cnt ? " " : "").concat(item.rw)).collect(Collectors.joining()));
-        int basic = 0, penalty = 0;
+        int basic = 0, penalty = 0, bonus = 0;
         for (int i = 0; i < size(); i++) {
             final var current = get(i);
             basic += current.getPoint();
             // ~Basic
             final int cn = get(i).context;
             if (get(i).pri != 1 && consumerMap.containsKey(cn)) {
-                if(subList(0, i + 1).stream().noneMatch(item -> consumerMap.get(cn).contains(item.context))) penalty = i + 1;
+                final var currentSub = subList(0, i + 1);
+                if(currentSub.stream().noneMatch(item -> consumerMap.get(cn).contains(item.context))) penalty = i + 1;
             }
             // ~Penalty
-
+//            final var lastSub = subList(0, i);
+//            final var lastPattern = lastSub.stream().filter(item -> item.rcutter).map(item -> item.context).toList();
+//            if(lastPattern.isEmpty()) continue;
+//            var existLastPattern = pattern.get(lastPattern);
+//            if(existLastPattern == null) continue;
+//            existLastPattern.get(cn)
         }
         point = basic - penalty;
     }

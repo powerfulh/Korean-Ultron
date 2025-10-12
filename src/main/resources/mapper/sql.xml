@@ -13,7 +13,7 @@
     <select id="selectContext" resultType="map">select * from plm_context c</select>
     <select id="selectCompound" resultType="map">select * from llm_word_compound c</select>
     <select id="selectGenerationTarget" resultType="root.UltronContext">
-        select sq.leftword, sq.rightword, sq.context, lw.word lw, rw.word rw, sq.cnt, sq.space, max(sq.pri) pri, count(*) rcnt
+        select sq.leftword, sq.rightword, sq.context, lw.word lw, rw.word rw, sq.cnt, sq.space, max(sq.pri) pri, count(*) rcnt, rw.type = '조사' rcutter
         from llm_word lw, llm_word rw, (
             select c.leftword, c.rightword, c.cnt, c.space, uc.i, os.n = uc.sentence pri, uc.context,
             row_number() over (partition by ifnull(os.n, container.sentence), uc.context, pri, container.i order by uc.i) rn
@@ -34,9 +34,6 @@
         order by pri desc, rcnt desc, sq.i limit #{limit}
     </select>
     <select id="selectConsumer" resultType="root.mind.ConsumeContext">
-        -- 이걸 위 쿼리에서 레프트 조인을 할 까 메모리에 올려놓고 쓸 까 정말 많은 고민을 했다
-        -- 이 시점에 난 장기적으로 뭐가 나을지 알 수가 없고, 레프트 조인을 먼저 하면 왠지 나중에 떼기가 힘들 것 같아 우선 메모리에 올려놓기로 한다
-        -- 또한 사람이라면 항상 갖고 있는 지식일테니 사람에 가까운 구현 방식인 점도 한 몫 한다
         select DISTINCT mer.context mer, mable.context mable from (
             select t.n, max(t.ci) ci, t.context from plm_token t, llm_word w
             where t.rightword = w.n
@@ -53,18 +50,12 @@
         -- order by mer
     </select>
     <select id="selectCutterPattern" resultType="map">
-        select s.n, ifnull(if(csq.couple, csq.word, csq.cn), w.n) wn -- , w.word, w.`type`
-        from plm_ultron_sentence s, plm_ultron_context uc, plm_context c, llm_word w
-        left join (
-            select wc.word, lw.`type` = '조사' and rw.type = '조사' couple, if(lw.`type` = '조사', lw.n, rw.n) cn from llm_word_compound wc, llm_word lw, llm_word rw
-            where wc.leftword = lw.n and wc.rightword = rw.n
-            and '조사' in (lw.`type`, rw.`type`)
-        ) csq on w.n = csq.word
+        select s.n, cutter.n cutter -- , cutter.word, cutter.`type`
+        from plm_ultron_sentence s, plm_ultron_context uc, plm_context c, plm_cutter cutter
         where s.target is not NULL
         and s.n = uc.sentence
         and uc.context = c.n
-        and c.rightword = w.n
-        and (w.`type` = '조사' or csq.word is not null)
+        and c.rightword = cutter.wn
         order by uc.i -- s.n, uc.i
     </select>
 </mapper>

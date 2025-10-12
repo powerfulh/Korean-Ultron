@@ -12,7 +12,7 @@ public class CutterPattern {
         Map<Integer, List<Integer>> sentence = new HashMap<>();
         list.forEach(item -> {
             sentence.computeIfAbsent(item.get("n"), k -> new ArrayList<>());
-            sentence.get(item.get("n")).add(item.get("wn")); // 쿼리에서 오다 바이를 했으니 순서는 보장될 것이다
+            sentence.get(item.get("n")).add(item.get("cutter")); // 쿼리에서 오다 바이를 했으니 순서는 보장될 것이다
         });
         final int closer = -1;
         sentence.keySet().forEach(item -> {
@@ -25,5 +25,9 @@ public class CutterPattern {
                 map.get(pattern).merge(next, 1, Integer::sum);
             }
         });
+    }
+
+    public Map<List<Integer>, Map<Integer, Integer>> getMap() {
+        return map;
     }
 }
