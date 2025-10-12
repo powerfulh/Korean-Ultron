@@ -80,7 +80,8 @@ public class Core {
     @GetMapping
     public List<Map<String, Object>> v1(@Valid @Size(min = 1, max = 18) String pureSrc, boolean export) {
         Map<Integer, List<List<UltronContext>>> listMap = new HashMap<>();
-        var targetList = mapper.selectGenerationTarget(understand(pureSrc), 50 + pureSrc.length());
+        var understood = understand(pureSrc);
+        var targetList = mapper.selectGenerationTarget(understood, 50 + understood.size());
         targetList.forEach(item -> {
             Map<Integer, List<UltronHistory>> historyList = new HashMap<>(); // 원랜 공통이였는데 억울하게 탈락되는 기대 문장이 생겨서 오프너 별로 내렸다 251011
             var list = listMap.get(item.getLeftword());
@@ -130,7 +131,7 @@ class UltronContext implements Twoken {
 class UltronSentence extends ArrayList<UltronContext> {
     final String export;
     final int point;
-    final int bonusLog;
+    final String bonusLog;
 
     int cutterBonus(List<Integer> lastPattern, Map<List<Integer>, Map<Integer, Integer>> pattern, int cutter) {
         if(lastPattern.isEmpty()) return 0;
@@ -141,7 +142,7 @@ class UltronSentence extends ArrayList<UltronContext> {
     UltronSentence(List<UltronContext> list, Map<Integer, List<Integer>> consumerMap, Map<List<Integer>, Map<Integer, Integer>> pattern) {
         super(list);
         export = get(0).lw.concat(stream().map(item -> (item.space > item.cnt ? " " : "").concat(item.rw)).collect(Collectors.joining()));
-        int basic = 0, penalty = 0, bonus = 0;
+        int basic = 0, penalty = 0, bonus = 1;
         boolean bonusClose = false;
         for (int i = 0; i < size(); i++) {
             final var current = get(i);
@@ -165,8 +166,8 @@ class UltronSentence extends ArrayList<UltronContext> {
         try { // 클로서 보너스
             bonus += cutterBonus(stream().filter(item -> item.rcutter != null).map(item -> item.rcutter).toList(), pattern, CutterPattern.closer);
         } catch (NullPointerException ignored) {}
-        point = basic - penalty + bonus;
-        bonusLog = bonus;
+        point = (basic - penalty) * bonus;
+        bonusLog = bonus + " - " + penalty;
     }
 
     Map<String, Object> toDto(boolean e) {
