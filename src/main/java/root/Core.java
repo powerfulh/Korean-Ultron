@@ -70,11 +70,12 @@ public class Core {
                     historyList.computeIfAbsent(size - 1, k -> new ArrayList<>());
                     historyList.get(size - 1).add(new UltronHistory(clone.get(size - 2).getLeftword(), c.getLeftword(), c.getRightword()));
                 }
-                if(c.rightword == 184) generated.add(new ArrayList<>(clone));
+//                if(c.rightword == 184) generated.add(new ArrayList<>(clone));
                 generate(clone, targetList.stream().filter(item -> item != c).toList(), generated, c.getRightword(), historyList);
             }
         }
-        if(!match && sentence.get(sentence.size() - 1).rightword != 184) generated.add(sentence);
+//        if(!match && sentence.get(sentence.size() - 1).rightword != 184) generated.add(sentence);
+        if(!match) generated.add(sentence);
     }
 
     @GetMapping
@@ -131,7 +132,7 @@ class UltronContext implements Twoken {
 class UltronSentence extends ArrayList<UltronContext> {
     final String export;
     final int point;
-    final String bonusLog;
+//    final String bonusLog;
 
     int cutterBonus(List<Integer> lastPattern, Map<List<Integer>, Map<Integer, Integer>> pattern, int cutter) {
         if(lastPattern.isEmpty()) return 0;
@@ -167,14 +168,14 @@ class UltronSentence extends ArrayList<UltronContext> {
             bonus += cutterBonus(stream().filter(item -> item.rcutter != null).map(item -> item.rcutter).toList(), pattern, CutterPattern.closer);
         } catch (NullPointerException ignored) {}
         point = (basic - penalty) * bonus;
-        bonusLog = bonus + " - " + penalty;
+//        bonusLog = bonus + " - " + penalty;
     }
 
     Map<String, Object> toDto(boolean e) {
         Map<String, Object> dto = new HashMap<>();
         dto.put("point", point);
         dto.put("export", e ? export : this);
-        dto.put("bonusLog", bonusLog);
+//        dto.put("bonusLog", bonusLog);
         return dto;
     }
     @Override
