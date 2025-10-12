@@ -110,7 +110,7 @@ class UltronContext implements Twoken {
     int pri;
     int rcnt;
     int context;
-    boolean rcutter;
+    Integer rcutter;
 
     @Override
     public int getLeftword() {
@@ -129,11 +129,13 @@ class UltronContext implements Twoken {
 class UltronSentence extends ArrayList<UltronContext> {
     final String export;
     final int point;
+    final int bonusLog;
 
     UltronSentence(List<UltronContext> list, Map<Integer, List<Integer>> consumerMap, Map<List<Integer>, Map<Integer, Integer>> pattern) {
         super(list);
         export = get(0).lw.concat(stream().map(item -> (item.space > item.cnt ? " " : "").concat(item.rw)).collect(Collectors.joining()));
         int basic = 0, penalty = 0, bonus = 0;
+        boolean bonusClose = false;
         for (int i = 0; i < size(); i++) {
             final var current = get(i);
             basic += current.getPoint();
@@ -144,20 +146,27 @@ class UltronSentence extends ArrayList<UltronContext> {
                 if(currentSub.stream().noneMatch(item -> consumerMap.get(cn).contains(item.context))) penalty = i + 1;
             }
             // ~Penalty
-//            final var lastSub = subList(0, i);
-//            final var lastPattern = lastSub.stream().filter(item -> item.rcutter).map(item -> item.context).toList();
-//            if(lastPattern.isEmpty()) continue;
-//            var existLastPattern = pattern.get(lastPattern);
-//            if(existLastPattern == null) continue;
-//            existLastPattern.get(cn)
+            if(bonusClose || current.rcutter == null) continue;
+            final var lastSub = subList(0, i);
+            final var lastPattern = lastSub.stream().filter(item -> item.rcutter != null).map(item -> item.rcutter).toList();
+            if(lastPattern.isEmpty()) continue; // 첫번째 커터는 넘어감
+            var existLastPattern = pattern.get(lastPattern);
+            if(existLastPattern == null) {
+                bonusClose = true;
+                continue;
+            }
+            // 확률이 아닌 누적 점수라 점수대가 크지 않을까 하는 걱정이 있다
+            bonus += Objects.requireNonNullElse(existLastPattern.get(current.rcutter), 0) * lastPattern.size();
         }
-        point = basic - penalty;
+        point = basic - penalty + bonus;
+        bonusLog = bonus;
     }
 
     Map<String, Object> toDto(boolean e) {
         Map<String, Object> dto = new HashMap<>();
         dto.put("point", point);
         dto.put("export", e ? export : this);
+        dto.put("bonusLog", bonusLog);
         return dto;
     }
     @Override

@@ -13,7 +13,7 @@
     <select id="selectContext" resultType="map">select * from plm_context c</select>
     <select id="selectCompound" resultType="map">select * from llm_word_compound c</select>
     <select id="selectGenerationTarget" resultType="root.UltronContext">
-        select sq.leftword, sq.rightword, sq.context, lw.word lw, rw.word rw, sq.cnt, sq.space, max(sq.pri) pri, count(*) rcnt, rw.type = '조사' rcutter
+        select sq.leftword, sq.rightword, sq.context, lw.word lw, rw.word rw, sq.cnt, sq.space, max(sq.pri) pri, count(*) rcnt, cutter.n rcutter
         from llm_word lw, llm_word rw, (
             select c.leftword, c.rightword, c.cnt, c.space, uc.i, os.n = uc.sentence pri, uc.context,
             row_number() over (partition by ifnull(os.n, container.sentence), uc.context, pri, container.i order by uc.i) rn
@@ -28,7 +28,7 @@
             ) container left join plm_ultron_sentence os on container.sentence = os.target
             where ifnull(os.n, container.sentence) = uc.sentence
             and uc.context = c.n
-        ) sq
+        ) sq left join plm_cutter cutter on sq.rightword = cutter.wn
         where sq.leftword = lw.n and sq.rightword = rw.n
         group by sq.leftword, sq.rightword, sq.rn
         order by pri desc, rcnt desc, sq.i limit #{limit}
@@ -55,7 +55,7 @@
         where s.target is not NULL
         and s.n = uc.sentence
         and uc.context = c.n
-        and c.rightword = cutter.wn
+        and c.rightword = cutter.wn -- 첫 단어 즉 오프너는 버린다, 조사 오프너가 있을 수는 있다.. 근데 그 예외는 포기/감수한다 ㅋ
         order by uc.i -- s.n, uc.i
     </select>
 </mapper>
