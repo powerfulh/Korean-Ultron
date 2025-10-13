@@ -35,6 +35,8 @@ public class Core {
             consumerMap.get(item.getMer()).add(item.getMable());
         });
         cutterPattern = new CutterPattern(mapper.selectCutterPattern()).getMap();
+        mapper.deleteUltronCloser();
+        mapper.insertUltronCloser();
     }
 
     Sentence understand(String pureSrc) {
@@ -70,12 +72,11 @@ public class Core {
                     historyList.computeIfAbsent(size - 1, k -> new ArrayList<>());
                     historyList.get(size - 1).add(new UltronHistory(clone.get(size - 2).getLeftword(), c.getLeftword(), c.getRightword()));
                 }
-//                if(c.rightword == 184) generated.add(new ArrayList<>(clone));
+                if(c.closerContext) generated.add(new ArrayList<>(clone));
                 generate(clone, targetList.stream().filter(item -> item != c).toList(), generated, c.getRightword(), historyList);
             }
         }
-//        if(!match && sentence.get(sentence.size() - 1).rightword != 184) generated.add(sentence);
-        if(!match) generated.add(sentence);
+        if(!match && !sentence.get(sentence.size() - 1).closerContext) generated.add(sentence);
     }
 
     @GetMapping
@@ -114,6 +115,7 @@ class UltronContext implements Twoken {
     int rcnt;
     int context;
     Integer rcutter;
+    boolean closerContext;
 
     @Override
     public int getLeftword() {
@@ -167,6 +169,7 @@ class UltronSentence extends ArrayList<UltronContext> {
         try { // 클로서 보너스
             bonus += cutterBonus(stream().filter(item -> item.rcutter != null).map(item -> item.rcutter).toList(), pattern, CutterPattern.closer);
         } catch (NullPointerException ignored) {}
+        if(!get(size() - 1).closerContext) penalty += size();
         point = (basic - penalty) * bonus;
 //        bonusLog = bonus + " - " + penalty;
     }
