@@ -2,9 +2,8 @@ package root;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Size;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
 import root.mind.CutterPattern;
 import root.plm.*;
 import root.plm.entity.Twoken;
@@ -38,6 +37,10 @@ public class Core {
         mapper.deleteUltronCloser();
         mapper.insertUltronCloser();
     }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public void badReq() {}
 
     Sentence understand(String pureSrc) {
         final UnderstandTarget understandTarget = new UnderstandTarget(replaceRepeatedChars.replaceRepeatedChars(pureSrc, bank.symbols));
@@ -80,7 +83,8 @@ public class Core {
     }
 
     @GetMapping
-    public List<Map<String, Object>> v1(@Valid @Size(min = 1, max = 18) String pureSrc, boolean export) {
+    public List<Map<String, Object>> v1(@Valid @Size(min = 1, max = 30) String pureSrc, boolean export) {
+        if(pureSrc.replaceAll("\\s+", "").length() > 19) throw new IllegalArgumentException();
         Map<Integer, List<List<UltronContext>>> listMap = new HashMap<>();
         var understood = understand(pureSrc);
         var targetList = mapper.selectGenerationTarget(understood, 50 + understood.size());
