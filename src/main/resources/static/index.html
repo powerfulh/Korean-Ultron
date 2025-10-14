@@ -14,15 +14,15 @@
 
 <main>
     <div class="container">
-        <label for="promptInput">입력 허용 길이: 2 ~ 15자</label>
+        <label for="promptInput">입력 허용 길이: 공백 제외 2 ~ 18자</label>
         <input
                 type="text"
                 class="prompt-input"
                 placeholder="엔터키로 입력 완료"
                 id="promptInput"
-                onkeypress="handleKeyPress(event)"
-                maxlength="15"
+                maxlength="29"
                 minlength="2"
+                onkeydown="onInput(event)"
         >
         <div class="output-box" id="outputBox"></div>
     </div>
@@ -34,10 +34,10 @@
 </footer>
 
 <script>
-    function handleKeyPress(event) {
-        if (event.key === 'Enter') {
+    function onInput(e) {
+        if (e.key === 'Enter') {
             const input = document.getElementById('promptInput').value;
-            if (input.trim().length < 2) return
+            if (input.trim().length < 2 || input.replace(/\s/g, '').length > 18) return
             const output = document.getElementById('outputBox')
             output.textContent = 'Fetching.. ⌛'
             fetch(`/plm?pureSrc=${input}&export=true`).then(res => {
