@@ -13,8 +13,8 @@
     <select id="selectContext" resultType="map">select * from plm_context c</select>
     <select id="selectCompound" resultType="map">select * from llm_word_compound c</select>
     <select id="selectGenerationTarget" resultType="root.UltronContext">
-        select wq.*, exists (select 1 from plm_ultron_closer closer where closer.context = wq.context) closerContext from (
-            select sq.leftword, sq.rightword, sq.context, lw.word lw, rw.word rw, sq.cnt, sq.space, max(sq.pri) pri, count(*) rcnt, cutter.n rcutter
+        select wq.*, cutter.n rcutter, exists (select 1 from plm_ultron_closer closer where closer.context = wq.context) closerContext from (
+            select sq.leftword, sq.rightword, sq.context, lw.word lw, rw.word rw, sq.cnt, sq.space, max(sq.pri) pri, count(*) rcnt
             from llm_word lw, llm_word rw, (
                 select c.leftword, c.rightword, c.cnt, c.space, uc.i, os.n = uc.sentence pri, uc.context,
                 row_number() over (partition by ifnull(os.n, container.sentence), uc.context, pri, container.i order by uc.i) rn
@@ -29,11 +29,11 @@
                 ) container left join plm_ultron_sentence os on container.sentence = os.target
                 where ifnull(os.n, container.sentence) = uc.sentence
                 and uc.context = c.n
-            ) sq left join plm_cutter cutter on sq.rightword = cutter.wn
+            ) sq
             where sq.leftword = lw.n and sq.rightword = rw.n
             group by sq.leftword, sq.rightword, sq.rn
             order by pri desc, rcnt desc, sq.i limit #{limit}
-        ) wq
+        ) wq left join plm_cutter cutter on wq.rightword = cutter.wn
     </select>
     <select id="selectConsumer" resultType="root.mind.ConsumeContext">
         select DISTINCT mer.context mer, mable.context mable from (

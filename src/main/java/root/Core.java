@@ -138,7 +138,7 @@ class UltronContext implements Twoken {
 class UltronSentence extends ArrayList<UltronContext> {
     final String export;
     final int point;
-//    final String bonusLog;
+    final String bonusLog;
 
     int cutterBonus(List<Integer> lastPattern, Map<List<Integer>, Map<Integer, Integer>> pattern, int cutter) {
         if(lastPattern.isEmpty()) return 0;
@@ -175,14 +175,14 @@ class UltronSentence extends ArrayList<UltronContext> {
         } catch (NullPointerException ignored) {}
         if(!get(size() - 1).closerContext) penalty += size();
         point = (basic - penalty) * bonus;
-//        bonusLog = bonus + " - " + penalty;
+        bonusLog = bonus + " - " + penalty;
     }
 
     Map<String, Object> toDto(boolean e) {
         Map<String, Object> dto = new HashMap<>();
         dto.put("point", point);
         dto.put("export", e ? export : this);
-//        dto.put("bonusLog", bonusLog);
+        dto.put("bonusLog", bonusLog);
         return dto;
     }
     @Override
