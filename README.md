@@ -27,8 +27,6 @@ left join llm_word rw on c.rightword = rw.n
 where s.opener = o.n
 group by s.n
 ;
-WITH wq as (select sq.n, row_number() over() i from (
-select 28 n
-union select 483
-) sq)
+select up.word n, up.n i, lead(up.word) over(order by up.n) r from ultron_parameter up
+where up.n < 3
 ```
