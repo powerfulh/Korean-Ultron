@@ -13,7 +13,7 @@
     <select id="selectContext" resultType="map">select * from plm_context c</select>
     <select id="selectCompound" resultType="map">select * from llm_word_compound c</select>
     <select id="selectGenerationTarget" resultType="root.UltronContext">
-        select wq.*, cutter.n rcutter, lcutter.very_first, exists (select 1 from plm_ultron_closer closer where closer.context = wq.context) closerContext
+        select wq.*, cutter.n rcutter, lcutter.very_first noneOpener, exists (select 1 from plm_ultron_closer closer where closer.context = wq.context) closerContext
         from (
             select sq.leftword, sq.rightword, sq.context, lw.word lw, rw.word rw, sq.cnt, sq.space, max(sq.pri) pri, count(*) rcnt
             from llm_word lw, llm_word rw, (
