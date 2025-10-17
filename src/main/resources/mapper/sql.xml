@@ -62,6 +62,17 @@
         and c.rightword = cutter.wn -- 첫 단어 즉 오프너는 버린다, 조사 오프너가 있을 수는 있다.. 근데 그 예외는 포기/감수한다 ㅋ
         order by uc.i -- s.n, uc.i
     </select>
+    <select id="selectBuildingPattern" resultType="root.mind.BuildingPattern">
+        select * from (
+            select uc.sentence, uc.i, uc.context, exists(select 1 from plm_cutter ct where c.leftword = ct.wn) lc,
+            exists(select 1 from llm_word_compound sq where sq.word = c.rightword) cw,
+            (select sq.type from llm_word sq where sq.n = c.rightword) rt, c.rightword
+            from plm_ultron_context uc, plm_context c
+            where uc.context = c.n
+        ) wq
+        where wq.lc or wq.cw or wq.rt = '0'
+        order by wq.sentence, wq.i
+    </select>
 
     <insert id="insertUltronCloser">
         insert into plm_ultron_closer
