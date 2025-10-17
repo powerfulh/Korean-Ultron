@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Size;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import root.mind.BuildingPattern;
 import root.mind.CutterPattern;
 import root.plm.*;
 import root.plm.entity.Twoken;
@@ -23,6 +24,7 @@ public class Core {
 
     final Map<Integer, List<Integer>> consumerMap = new HashMap<>();
     final Map<List<Integer>, Map<Integer, Integer>> cutterPattern;
+    final BuildingPattern buildingPattern;
 
     public Core(Bank bank, ReplaceRepeatedChars replaceRepeatedChars, ContextCore contextCore, SqlMapper mapper) {
         this.bank = bank;
@@ -36,6 +38,7 @@ public class Core {
         cutterPattern = new CutterPattern(mapper.selectCutterPattern()).getMap();
         mapper.deleteUltronCloser();
         mapper.insertUltronCloser();
+        buildingPattern = new BuildingPattern(mapper.selectBuildingPattern());
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

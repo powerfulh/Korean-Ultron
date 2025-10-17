@@ -62,7 +62,7 @@
         and c.rightword = cutter.wn -- 첫 단어 즉 오프너는 버린다, 조사 오프너가 있을 수는 있다.. 근데 그 예외는 포기/감수한다 ㅋ
         order by uc.i -- s.n, uc.i
     </select>
-    <select id="selectBuildingPattern" resultType="root.mind.BuildingPattern">
+    <select id="selectBuildingPattern" resultType="root.mind.BuildingPatternItem">
         select * from (
             select uc.sentence, uc.i, uc.context, exists(select 1 from plm_cutter ct where c.leftword = ct.wn) lc,
             exists(select 1 from llm_word_compound sq where sq.word = c.rightword) cw,

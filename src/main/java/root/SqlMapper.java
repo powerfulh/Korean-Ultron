@@ -1,6 +1,7 @@
 package root;
 
 import org.apache.ibatis.annotations.Mapper;
+import root.mind.BuildingPatternItem;
 import root.mind.ConsumeContext;
 import root.plm.Toke;
 
@@ -18,4 +19,5 @@ public interface SqlMapper {
     List<Map<String, Integer>> selectCutterPattern();
     void insertUltronCloser();
     void deleteUltronCloser();
+    List<BuildingPatternItem> selectBuildingPattern();
 }
