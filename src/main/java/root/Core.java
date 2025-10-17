@@ -125,6 +125,8 @@ class UltronContext implements Twoken {
     Integer rcutter;
     boolean noneOpener;
     boolean closerContext;
+    Map<Integer, Integer> buildingPattern;
+
 
     @Override
     public int getLeftword() {
@@ -151,36 +153,59 @@ class UltronSentence extends ArrayList<UltronContext> {
         // 확률이 아닌 누적 횟수라 점수대가 크지 않을까 하는 걱정이 있다
         return Objects.requireNonNullElse(existLastPattern.get(cutter), 0) * (lastPattern.size() + (cutter == CutterPattern.closer ? 1 : 0));
     }
+    int cutBonus(List<UltronContext> cut) {
+        if(cut.size() < 2) return 0;
+        Map<Integer, Integer> building = null;
+        int point = 0;
+        for (int i = 0; i < cut.size(); i++) {
+            final UltronContext item = cut.get(cut.size() - 1 - i);
+            if(building == null && item.buildingPattern != null) building = item.buildingPattern;
+            else if(building != null) point = Integer.sum(point, Objects.requireNonNullElse(building.get(item.context), 0));
+        }
+        return point;
+    }
     UltronSentence(List<UltronContext> list, Map<Integer, List<Integer>> consumerMap, Map<List<Integer>, Map<Integer, Integer>> pattern) {
         super(list);
         export = get(0).lw.concat(stream().map(item -> (item.space > item.cnt ? " " : "").concat(item.rw)).collect(Collectors.joining()));
-        int basic = 0, penalty = 0, bonus = 1;
-        boolean bonusClose = false;
+        int basic = 0, penalty = 0, cutterPatternBonus = 0, buildingPatternBonus = 0;
+        boolean closedCutterPattern = false;
+        List<UltronContext> cut = new ArrayList<>();
         for (int i = 0; i < size(); i++) {
             final var current = get(i);
             basic += current.getPoint();
-            // ~Basic
-            final int cn = get(i).context;
-            if (get(i).pri != 1 && consumerMap.containsKey(cn)) {
+            // Penalty
+            final int cn = current.context;
+            if (current.pri != 1 && consumerMap.containsKey(cn)) {
                 final var currentSub = subList(0, i + 1);
                 if(currentSub.stream().noneMatch(item -> consumerMap.get(cn).contains(item.context))) penalty = i + 1;
             }
-            // ~Penalty
-            if(bonusClose || current.rcutter == null) continue;
-            try {
-                final var lastSub = subList(0, i);
-                final var lastPattern = lastSub.stream().filter(item -> item.rcutter != null).map(item -> item.rcutter).toList();
-                bonus += cutterBonus(lastPattern, pattern, current.rcutter);
-            } catch (NullPointerException e) {
-                bonusClose = true;
+            // Cutter pattern bonus
+            if(!closedCutterPattern && current.rcutter != null) {
+                try {
+                    final var lastSub = subList(0, i);
+                    final var lastPattern = lastSub.stream().filter(item -> item.rcutter != null).map(item -> item.rcutter).toList();
+                    cutterPatternBonus += cutterBonus(lastPattern, pattern, current.rcutter);
+                } catch (NullPointerException e) {
+                    closedCutterPattern = true;
+                }
             }
+            // Building pattern bonus
+            if(current.rcutter != null) {
+                buildingPatternBonus += cutBonus(cut);
+                cut = new ArrayList<>();
+            }
+            cut.add(current);
         }
-        try { // 클로서 보너스
-            bonus += cutterBonus(stream().filter(item -> item.rcutter != null).map(item -> item.rcutter).toList(), pattern, CutterPattern.closer);
+        // Cutter pattern last bonus
+        try {
+            cutterPatternBonus += cutterBonus(stream().filter(item -> item.rcutter != null).map(item -> item.rcutter).toList(), pattern, CutterPattern.closer);
         } catch (NullPointerException ignored) {}
+        // None closer penalty
         if(!get(size() - 1).closerContext) penalty += size();
-        point = (basic - penalty) * bonus;
-        bonusLog = bonus + " - " + penalty;
+        // Building pattern last bonus
+        buildingPatternBonus += cutBonus(cut);
+        point = (basic - penalty) * (1 + cutterPatternBonus + buildingPatternBonus);
+        bonusLog = "(" + basic + " - " + penalty + ") * ((" + cutterPatternBonus + " + " + buildingPatternBonus + ") || 1)";
     }
 
     Map<String, Object> toDto(boolean e) {
