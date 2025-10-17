@@ -205,7 +205,7 @@ class UltronSentence extends ArrayList<UltronContext> {
         if(!get(size() - 1).closerContext) penalty += size();
         // Building pattern last bonus
         buildingPatternBonus += cutBonus(cut);
-        point = (basic - penalty) * (1 + cutterPatternBonus + buildingPatternBonus);
+        point = (basic - penalty) * Math.max(cutterPatternBonus + buildingPatternBonus, 1);
         bonusLog = "(" + basic + " - " + penalty + ") * ((" + cutterPatternBonus + " + " + buildingPatternBonus + ") || 1)";
     }
 
