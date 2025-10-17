@@ -63,7 +63,8 @@
         order by uc.i -- s.n, uc.i
     </select>
     <select id="selectBuildingPattern" resultType="root.mind.BuildingPatternItem">
-        select * from (
+        select wq.sentence, wq.context, wq.lc, wq.cw, wq.rt, wq.rightword
+        from (
             select uc.sentence, uc.i, uc.context, exists(select 1 from plm_cutter ct where c.leftword = ct.wn) lc,
             exists(select 1 from llm_word_compound sq where sq.word = c.rightword) cw,
             (select sq.type from llm_word sq where sq.n = c.rightword) rt, c.rightword
