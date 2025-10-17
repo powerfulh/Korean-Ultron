@@ -30,6 +30,7 @@ public class BuildingPattern {
                 if(cut.size() > 1) cutList.add(new Cut(cut));
                 cut = new ArrayList<>();
             }
+            currentSentence = item.sentence();
             if(item.rt().equals("0")) {
                 cut.add(item);
                 continue;
