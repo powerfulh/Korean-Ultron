@@ -24,7 +24,7 @@ public class Core {
 
     final Map<Integer, List<Integer>> consumerMap = new HashMap<>();
     final Map<List<Integer>, Map<Integer, Integer>> cutterPattern;
-    final BuildingPattern buildingPattern;
+    final Map<Integer, Map<Integer, Integer>> buildingPattern;
 
     public Core(Bank bank, ReplaceRepeatedChars replaceRepeatedChars, ContextCore contextCore, SqlMapper mapper) {
         this.bank = bank;
@@ -38,7 +38,7 @@ public class Core {
         cutterPattern = new CutterPattern(mapper.selectCutterPattern()).getMap();
         mapper.deleteUltronCloser();
         mapper.insertUltronCloser();
-        buildingPattern = new BuildingPattern(mapper.selectBuildingPattern());
+        buildingPattern = new BuildingPattern(mapper.selectBuildingPattern(), bank.wordList, bank.compoundList).get();
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
