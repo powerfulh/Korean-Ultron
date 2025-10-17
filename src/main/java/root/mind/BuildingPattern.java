@@ -37,6 +37,7 @@ public class BuildingPattern {
             }
             if(item.cw() && findZero(item.rightword(), wordList, compoundList)) cut.add(item);
         }
+        if(cut.size() > 1) cutList.add(new Cut(cut));
         cutList.forEach(item -> {
             map.computeIfAbsent(item.getBuilding(), k -> new HashMap<>());
             item.getBuilders().forEach(builder -> map.get(item.getBuilding()).merge(builder, 1, Integer::sum));

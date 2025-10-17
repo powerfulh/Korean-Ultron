@@ -92,6 +92,7 @@ public class Core {
         var understood = understand(pureSrc);
         var targetList = mapper.selectGenerationTarget(understood, 50 + understood.size());
         targetList.forEach(item -> {
+            item.buildingPattern = buildingPattern.get(item.context);
             if(item.noneOpener) return;
             Map<Integer, List<UltronHistory>> historyList = new HashMap<>(); // 원랜 공통이였는데 억울하게 탈락되는 기대 문장이 생겨서 오프너 별로 내렸다 251011
             var list = listMap.get(item.getLeftword());
