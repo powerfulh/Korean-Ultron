@@ -2,19 +2,9 @@ server:
   port: 8081
 
 spring:
-  datasource:
-    driver-class-name: org.mariadb.jdbc.Driver
-    url: ${MARIADBDOMAIN}
-    username: powerfulh
-    password: ${MARIADBPASSWORD}
-
-#  profiles:
-#    active: local
+  config:
+    import:
+      - classpath:l.yml
 
 mybatis:
   mapper-locations: classpath:mapper/**/*.xml
-
-logging:
-  pattern:
-    console: "%-5level %logger{36} - %msg [%thread]%n"
-#    console: "%d{MMdd HH:mm:ss} %-5level %logger{36} - %msg [%thread]%n"
