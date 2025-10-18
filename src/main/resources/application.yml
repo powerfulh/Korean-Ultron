@@ -4,12 +4,12 @@ server:
 spring:
   datasource:
     driver-class-name: org.mariadb.jdbc.Driver
-    url: jdbc:mariadb://svc.sel4.cloudtype.app:32398/powerful-maria
+    url: ${MARIADBDOMAIN}
     username: powerfulh
-    password: 123153
+    password: ${MARIADBPASSWORD}
 
-  profiles:
-    active: local
+#  profiles:
+#    active: local
 
 mybatis:
   mapper-locations: classpath:mapper/**/*.xml
