@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class CutterPattern {
     public static final int closer = -1;
@@ -27,7 +28,12 @@ public class CutterPattern {
         });
     }
 
-    public Map<List<Integer>, Map<Integer, Integer>> getMap() {
-        return map;
+    public Map<List<Integer>, Map<Integer, Double>> getMap() {
+        final Map<List<Integer>, Map<Integer, Double>> pattern = new HashMap<>();
+        map.forEach((key, value) -> {
+            final int sum = map.get(key).values().stream().mapToInt(point -> point).sum();
+            pattern.put(key, value.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue() * 1.0 / sum)));
+        });
+        return pattern;
     }
 }

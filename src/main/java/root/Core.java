@@ -23,7 +23,7 @@ public class Core {
     final SqlMapper mapper;
 
     final Map<Integer, List<Integer>> consumerMap = new HashMap<>();
-    final Map<List<Integer>, Map<Integer, Integer>> cutterPattern;
+    final Map<List<Integer>, Map<Integer, Double>> cutterPattern;
     final Map<Integer, Map<Integer, Integer>> buildingPattern;
 
     public Core(Bank bank, ReplaceRepeatedChars replaceRepeatedChars, ContextCore contextCore, SqlMapper mapper) {
@@ -148,11 +148,11 @@ class UltronSentence extends ArrayList<UltronContext> {
     final int point;
     final String bonusLog;
 
-    int cutterBonus(List<Integer> lastPattern, Map<List<Integer>, Map<Integer, Integer>> pattern, int cutter) {
+    int cutterBonus(List<Integer> lastPattern, Map<List<Integer>, Map<Integer, Double>> pattern, int cutter) {
         if(lastPattern.isEmpty()) return 0;
         var existLastPattern = pattern.get(lastPattern);
-        // 확률이 아닌 누적 횟수라 점수대가 크지 않을까 하는 걱정이 있다
-        return Objects.requireNonNullElse(existLastPattern.get(cutter), 0) * (lastPattern.size() + (cutter == CutterPattern.closer ? 1 : 0));
+        final double chance = Objects.requireNonNullElse(existLastPattern.get(cutter), 0.0);
+        return (int) Math.ceil(chance * (lastPattern.size() + (cutter == CutterPattern.closer ? 1 : 0)));
     }
     int cutBonus(List<UltronContext> cut) {
         if(cut.size() < 2) return 0;
@@ -165,7 +165,7 @@ class UltronSentence extends ArrayList<UltronContext> {
         }
         return point;
     }
-    UltronSentence(List<UltronContext> list, Map<Integer, List<Integer>> consumerMap, Map<List<Integer>, Map<Integer, Integer>> pattern) {
+    UltronSentence(List<UltronContext> list, Map<Integer, List<Integer>> consumerMap, Map<List<Integer>, Map<Integer, Double>> pattern) {
         super(list);
         export = get(0).lw.concat(stream().map(item -> (item.space > item.cnt ? " " : "").concat(item.rw)).collect(Collectors.joining()));
         int basic = 0, penalty = 0, cutterPatternBonus = 0, buildingPatternBonus = 0;
