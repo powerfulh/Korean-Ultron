@@ -86,7 +86,7 @@ public class Core {
     }
 
     @GetMapping
-    public List<Map<String, Object>> v1(@Valid @Size(min = 1, max = 30) String pureSrc, boolean export) {
+    public V1Res v1(@Valid @Size(min = 1, max = 30) String pureSrc, boolean export) {
         if(pureSrc.replaceAll("\\s+", "").length() > 19) throw new IllegalArgumentException();
         Map<Integer, List<List<UltronContext>>> listMap = new HashMap<>();
         var understood = understand(pureSrc);
@@ -109,7 +109,7 @@ public class Core {
         }));
         var res = sentenceList.stream()
                 .distinct().sorted(Comparator.comparing(item -> item.point * -1)).map(item -> item.toDto(export)).toList();
-        return res.size() > 5 ? res.subList(0, 5) : res;
+        return new V1Res(understood.stream().map(Toke::getN).toList(), res.size() > 5 ? res.subList(0, 5) : res);
     }
 }
 
@@ -229,3 +229,8 @@ class UltronSentence extends ArrayList<UltronContext> {
 }
 // 우선 같은 자리에 연속된 두개의 콘텍스트만 방지해보자, 필요하다면 같은 자리에 딱 하나의 콘텍스트 중복 방지도 가능하다
 record UltronHistory(int w0, int w1, int w2) {}
+
+record V1Res(
+        List<Integer> in,
+        List<Map<String, Object>> out
+) {}
