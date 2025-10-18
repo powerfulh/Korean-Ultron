@@ -208,8 +208,9 @@ class UltronSentence extends ArrayList<UltronContext> {
         if(!get(size() - 1).closerContext) penalty += size();
         // Building pattern last bonus
         buildingPatternBonus += cutBonus(cut);
-        point = (basic - penalty + (opener.exOpener ? opener.getPoint() : 0)) * Math.max(cutterPatternBonus + buildingPatternBonus, 1);
-        bonusLog = "(" + basic + " - " + penalty + ") * ((" + cutterPatternBonus + " + " + buildingPatternBonus + ") || 1)";
+        final int openBonus = opener.exOpener ? opener.getPoint() : 0;
+        point = (basic - penalty + openBonus) * Math.max(cutterPatternBonus + buildingPatternBonus, 1);
+        bonusLog = "(" + basic + " - " + penalty + " + " + openBonus + ") * ((" + cutterPatternBonus + " + " + buildingPatternBonus + ") || 1)";
     }
 
     Map<String, Object> toDto(boolean e) {
