@@ -39,6 +39,8 @@ public class Core {
         mapper.deleteUltronCloser();
         mapper.insertUltronCloser();
         buildingPattern = new BuildingPattern(mapper.selectBuildingPattern(), bank.wordList, bank.compoundList).get();
+        mapper.deleteExperiencedOpener();
+        mapper.insertExperiencedOpener();
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
@@ -127,7 +129,7 @@ class UltronContext implements Twoken {
     boolean noneOpener;
     boolean closerContext;
     Map<Integer, Integer> buildingPattern;
-
+    boolean exOpener;
 
     @Override
     public int getLeftword() {
@@ -167,7 +169,8 @@ class UltronSentence extends ArrayList<UltronContext> {
     }
     UltronSentence(List<UltronContext> list, Map<Integer, List<Integer>> consumerMap, Map<List<Integer>, Map<Integer, Double>> pattern) {
         super(list);
-        export = get(0).lw.concat(stream().map(item -> (item.space > item.cnt ? " " : "").concat(item.rw)).collect(Collectors.joining()));
+        final var opener = get(0);
+        export = opener.lw.concat(stream().map(item -> (item.space > item.cnt ? " " : "").concat(item.rw)).collect(Collectors.joining()));
         int basic = 0, penalty = 0, cutterPatternBonus = 0, buildingPatternBonus = 0;
         boolean closedCutterPattern = false;
         List<UltronContext> cut = new ArrayList<>();
@@ -205,7 +208,7 @@ class UltronSentence extends ArrayList<UltronContext> {
         if(!get(size() - 1).closerContext) penalty += size();
         // Building pattern last bonus
         buildingPatternBonus += cutBonus(cut);
-        point = (basic - penalty) * Math.max(cutterPatternBonus + buildingPatternBonus, 1);
+        point = (basic - penalty + (opener.exOpener ? opener.getPoint() : 0)) * Math.max(cutterPatternBonus + buildingPatternBonus, 1);
         bonusLog = "(" + basic + " - " + penalty + ") * ((" + cutterPatternBonus + " + " + buildingPatternBonus + ") || 1)";
     }
 

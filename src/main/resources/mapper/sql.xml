@@ -13,7 +13,9 @@
     <select id="selectContext" resultType="map">select * from plm_context c</select>
     <select id="selectCompound" resultType="map">select * from llm_word_compound c</select>
     <select id="selectGenerationTarget" resultType="root.UltronContext">
-        select wq.*, cutter.n rcutter, lcutter.very_first noneOpener, exists (select 1 from plm_ultron_closer closer where closer.context = wq.context) closerContext
+        select wq.*, cutter.n rcutter, lcutter.very_first noneOpener,
+        exists (select 1 from plm_ultron_closer closer where closer.context = wq.context) closerContext,
+        exists (select 1 from plm_ultron_experienced_opener exOpener where exOpener.context = wq.context) exOpener
         from (
             select sq.leftword, sq.rightword, sq.context, lw.word lw, rw.word rw, sq.cnt, sq.space, max(sq.pri) pri, count(*) rcnt
             from llm_word lw, llm_word rw, (
@@ -85,6 +87,12 @@
         and s.target is not null
         and uc.sentence = lc.sentence and uc.i = lc.i
     </insert>
+    <insert id="insertExperiencedOpener">
+        insert INTO plm_ultron_experienced_opener
+        select distinct uc.context from plm_ultron_context uc
+        where uc.i = 0
+    </insert>
 
     <delete id="deleteUltronCloser">delete from plm_ultron_closer</delete>
+    <delete id="deleteExperiencedOpener">delete from plm_ultron_experienced_opener</delete>
 </mapper>

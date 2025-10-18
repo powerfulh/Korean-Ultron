@@ -20,4 +20,6 @@ public interface SqlMapper {
     void insertUltronCloser();
     void deleteUltronCloser();
     List<BuildingPatternItem> selectBuildingPattern();
+    void insertExperiencedOpener();
+    void deleteExperiencedOpener();
 }
