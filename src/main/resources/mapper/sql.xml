@@ -17,11 +17,16 @@
         exists (select 1 from plm_ultron_closer closer where closer.context = wq.context) closerContext,
         exists (select 1 from plm_ultron_experienced_opener exOpener where exOpener.context = wq.context) exOpener
         from (
-            select sq.leftword, sq.rightword, sq.context, lw.word lw, rw.word rw, sq.cnt, sq.space, max(sq.pri) pri, count(*) rcnt
+            select sq.leftword, sq.rightword, sq.context, lw.word lw, rw.word rw, sq.cnt, sq.space, max(sq.pri) pri, count(*) rcnt, sq.rightAbstract
             from llm_word lw, llm_word rw, (
                 select c.leftword, c.rightword, c.cnt, c.space, uc.i, os.n = uc.sentence pri, uc.context,
-                row_number() over (partition by ifnull(os.n, container.sentence), uc.context, pri, container.i order by uc.i) rn
-                from plm_ultron_context uc, plm_context c, (
+                row_number() over (partition by ifnull(os.n, container.sentence), uc.context, pri, container.i order by uc.i) rn, uc.rightAbstract
+                from (
+                    select uc.sentence, uc.context, uc.i,
+                    if(rw.`type` = '어미' and LEAD(rw.`type`) over(partition by uc.sentence order by uc.i) = '어미', LEAD(uc.context) over(partition by uc.sentence order by uc.i), null) rightAbstract
+                    from plm_ultron_context uc, plm_context c, llm_word rw
+                    where uc.context = c.n and c.rightword = rw.n
+                ) uc, plm_context c, (
                     select uc.sentence, p.i from plm_ultron_context uc, plm_context c, (
                     <foreach collection="list" item="item" separator=" union all " index="i">select #{item.n} n, #{i} i, #{item.rightword} r</foreach>
                     ) p
@@ -34,7 +39,7 @@
                 and uc.context = c.n
             ) sq
             where sq.leftword = lw.n and sq.rightword = rw.n
-            group by sq.leftword, sq.rightword, sq.rn
+            group by sq.leftword, sq.rightword, sq.rn, sq.rightAbstract
             order by pri desc, rcnt desc, sq.i limit #{limit}
         ) wq left join plm_cutter cutter on wq.rightword = cutter.wn
         left join plm_cutter lcutter on lcutter.very_first and wq.leftword = lcutter.wn
