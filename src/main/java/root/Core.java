@@ -178,6 +178,7 @@ class UltronSentence extends ArrayList<UltronContext> {
         int basic = 0, unconsumedPenalty = 0, cutterPatternBonus = 0, buildingPatternBonus = 0, tripletBonus = 0, breakAbstractPenalty = 0;
         boolean closedCutterPattern = false;
         List<UltronContext> cut = new ArrayList<>();
+        boolean breakAbstract = false;
         for (int i = 0; i < size(); i++) {
             final var current = get(i);
             basic += current.getPoint();
@@ -206,7 +207,8 @@ class UltronSentence extends ArrayList<UltronContext> {
             }
             cut.add(current);
             // Abstract penalty
-            if(last != null && last.rightAbstract != null && last.rightAbstract != cn) breakAbstractPenalty += current.getPoint();
+            if(breakAbstract) breakAbstractPenalty += current.getPoint();
+            else if(last != null && last.rightAbstract != null && last.rightAbstract != cn) breakAbstract = true;
         }
         // Cutter pattern last bonus
         try {
