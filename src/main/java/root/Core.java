@@ -110,7 +110,7 @@ public class Core {
         List<UltronSentence> sentenceList = new ArrayList<>();
         listMap.keySet().forEach(item -> listMap.get(item).forEach(li -> {
             if(li.isEmpty()) return;
-            sentenceList.add(new UltronSentence(li, consumerMap, cutterPattern));
+            sentenceList.add(new UltronSentence(li, consumerMap, cutterPattern, tripletSet));
         }));
         var res = sentenceList.stream()
                 .distinct().sorted(Comparator.comparing(item -> item.point * -1)).map(item -> item.toDto(export)).toList();
@@ -170,16 +170,17 @@ class UltronSentence extends ArrayList<UltronContext> {
         }
         return point;
     }
-    UltronSentence(List<UltronContext> list, Map<Integer, List<Integer>> consumerMap, Map<List<Integer>, Map<Integer, Double>> pattern) {
+    UltronSentence(List<UltronContext> list, Map<Integer, List<Integer>> consumerMap, Map<List<Integer>, Map<Integer, Double>> pattern, Set<Triplet> tripletSet) {
         super(list);
         final var opener = get(0);
         export = opener.lw.concat(stream().map(item -> (item.space > item.cnt ? " " : "").concat(item.rw)).collect(Collectors.joining()));
-        int basic = 0, penalty = 0, cutterPatternBonus = 0, buildingPatternBonus = 0;
+        int basic = 0, penalty = 0, cutterPatternBonus = 0, buildingPatternBonus = 0, tripletBonus = 0;
         boolean closedCutterPattern = false;
         List<UltronContext> cut = new ArrayList<>();
         for (int i = 0; i < size(); i++) {
             final var current = get(i);
             basic += current.getPoint();
+            if(i > 0 && current.pri == 1 && get(i - 1).pri == 1 && tripletSet.contains(new Triplet(get(i - 1).context, current.context))) tripletBonus += current.rcnt;
             // Penalty
             final int cn = current.context;
             if (current.pri != 1 && consumerMap.containsKey(cn)) {
@@ -212,8 +213,8 @@ class UltronSentence extends ArrayList<UltronContext> {
         // Building pattern last bonus
         buildingPatternBonus += cutBonus(cut);
         final int openBonus = opener.exOpener ? opener.getPoint() : 0;
-        point = (basic - penalty + openBonus) * Math.max(cutterPatternBonus + buildingPatternBonus, 1);
-        bonusLog = "(" + basic + " - " + penalty + " + " + openBonus + ") * ((" + cutterPatternBonus + " + " + buildingPatternBonus + ") || 1)";
+        point = (basic - penalty + openBonus + tripletBonus) * Math.max(cutterPatternBonus + buildingPatternBonus, 1);
+        bonusLog = "(" + basic + " - " + penalty + " + " + openBonus + " + " + tripletBonus + ") * ((" + cutterPatternBonus + " + " + buildingPatternBonus + ") || 1)";
     }
 
     Map<String, Object> toDto(boolean e) {
