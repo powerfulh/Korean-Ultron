@@ -133,6 +133,7 @@ class UltronContext implements Twoken {
     boolean closerContext;
     Map<Integer, Integer> buildingPattern;
     boolean exOpener;
+    Integer rightAbstract;
 
     @Override
     public int getLeftword() {
@@ -174,7 +175,7 @@ class UltronSentence extends ArrayList<UltronContext> {
         super(list);
         final var opener = get(0);
         export = opener.lw.concat(stream().map(item -> (item.space > item.cnt ? " " : "").concat(item.rw)).collect(Collectors.joining()));
-        int basic = 0, penalty = 0, cutterPatternBonus = 0, buildingPatternBonus = 0, tripletBonus = 0;
+        int basic = 0, inconsumePenalty = 0, cutterPatternBonus = 0, buildingPatternBonus = 0, tripletBonus = 0;
         boolean closedCutterPattern = false;
         List<UltronContext> cut = new ArrayList<>();
         for (int i = 0; i < size(); i++) {
@@ -185,7 +186,7 @@ class UltronSentence extends ArrayList<UltronContext> {
             final int cn = current.context;
             if (current.pri != 1 && consumerMap.containsKey(cn)) {
                 final var currentSub = subList(0, i + 1);
-                if(currentSub.stream().noneMatch(item -> consumerMap.get(cn).contains(item.context))) penalty = i + 1;
+                if(currentSub.stream().noneMatch(item -> consumerMap.get(cn).contains(item.context))) inconsumePenalty = i + 1;
             }
             // Cutter pattern bonus
             if(!closedCutterPattern && current.rcutter != null) {
@@ -209,12 +210,12 @@ class UltronSentence extends ArrayList<UltronContext> {
             cutterPatternBonus += cutterBonus(stream().filter(item -> item.rcutter != null).map(item -> item.rcutter).toList(), pattern, CutterPattern.closer);
         } catch (NullPointerException ignored) {}
         // None closer penalty
-        if(!get(size() - 1).closerContext) penalty += size();
+        final int ncp = get(size() - 1).closerContext ? 0 : size();
         // Building pattern last bonus
         buildingPatternBonus += cutBonus(cut);
         final int openBonus = opener.exOpener ? opener.getPoint() : 0;
-        point = (basic - penalty + openBonus + tripletBonus) * Math.max(cutterPatternBonus + buildingPatternBonus, 1);
-        bonusLog = "(" + basic + " - " + penalty + " + " + openBonus + " + " + tripletBonus + ") * ((" + cutterPatternBonus + " + " + buildingPatternBonus + ") || 1)";
+        point = (basic - inconsumePenalty + openBonus + tripletBonus - ncp) * Math.max(cutterPatternBonus + buildingPatternBonus, 1);
+        bonusLog = "(" + basic + " - " + inconsumePenalty + " + " + openBonus + " + " + tripletBonus + " - " + ncp + ") * ((" + cutterPatternBonus + " + " + buildingPatternBonus + ") || 1)";
     }
 
     Map<String, Object> toDto(boolean e) {
