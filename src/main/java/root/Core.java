@@ -175,18 +175,19 @@ class UltronSentence extends ArrayList<UltronContext> {
         super(list);
         final var opener = get(0);
         export = opener.lw.concat(stream().map(item -> (item.space > item.cnt ? " " : "").concat(item.rw)).collect(Collectors.joining()));
-        int basic = 0, inconsumePenalty = 0, cutterPatternBonus = 0, buildingPatternBonus = 0, tripletBonus = 0;
+        int basic = 0, unconsumedPenalty = 0, cutterPatternBonus = 0, buildingPatternBonus = 0, tripletBonus = 0, breakAbstractPenalty = 0;
         boolean closedCutterPattern = false;
         List<UltronContext> cut = new ArrayList<>();
         for (int i = 0; i < size(); i++) {
             final var current = get(i);
             basic += current.getPoint();
-            if(i > 0 && current.pri == 1 && get(i - 1).pri == 1 && tripletSet.contains(new Triplet(get(i - 1).context, current.context))) tripletBonus += current.rcnt;
+            final var last = i > 0 ? get(i - 1) : null;
+            if(i > 0 && current.pri == 1 && last.pri == 1 && tripletSet.contains(new Triplet(last.context, current.context))) tripletBonus += current.rcnt;
             // Penalty
             final int cn = current.context;
             if (current.pri != 1 && consumerMap.containsKey(cn)) {
                 final var currentSub = subList(0, i + 1);
-                if(currentSub.stream().noneMatch(item -> consumerMap.get(cn).contains(item.context))) inconsumePenalty = i + 1;
+                if(currentSub.stream().noneMatch(item -> consumerMap.get(cn).contains(item.context))) unconsumedPenalty = i + 1;
             }
             // Cutter pattern bonus
             if(!closedCutterPattern && current.rcutter != null) {
@@ -204,6 +205,8 @@ class UltronSentence extends ArrayList<UltronContext> {
                 cut = new ArrayList<>();
             }
             cut.add(current);
+            // Abstract penalty
+            if(last != null && last.rightAbstract != null && last.rightAbstract != cn) breakAbstractPenalty += current.getPoint();
         }
         // Cutter pattern last bonus
         try {
@@ -214,8 +217,8 @@ class UltronSentence extends ArrayList<UltronContext> {
         // Building pattern last bonus
         buildingPatternBonus += cutBonus(cut);
         final int openBonus = opener.exOpener ? opener.getPoint() : 0;
-        point = (basic - inconsumePenalty + openBonus + tripletBonus - ncp) * Math.max(cutterPatternBonus + buildingPatternBonus, 1);
-        bonusLog = "(" + basic + " - " + inconsumePenalty + " + " + openBonus + " + " + tripletBonus + " - " + ncp + ") * ((" + cutterPatternBonus + " + " + buildingPatternBonus + ") || 1)";
+        point = (basic - unconsumedPenalty + openBonus + tripletBonus - ncp - breakAbstractPenalty) * Math.max(cutterPatternBonus + buildingPatternBonus, 1);
+        bonusLog = "(" + basic + " - " + unconsumedPenalty + " + " + openBonus + " + " + tripletBonus + " - " + ncp + " - " + breakAbstractPenalty + ") * ((" + cutterPatternBonus + " + " + buildingPatternBonus + ") || 1)";
     }
 
     Map<String, Object> toDto(boolean e) {
