@@ -3,10 +3,12 @@ package root;
 import org.apache.ibatis.annotations.Mapper;
 import root.mind.BuildingPatternItem;
 import root.mind.ConsumeContext;
+import root.mind.Triplet;
 import root.plm.Toke;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Mapper
 public interface SqlMapper {
@@ -22,4 +24,5 @@ public interface SqlMapper {
     List<BuildingPatternItem> selectBuildingPattern();
     void insertExperiencedOpener();
     void deleteExperiencedOpener();
+    Set<Triplet> selectTriplet();
 }

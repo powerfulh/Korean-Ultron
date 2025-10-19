@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import root.mind.BuildingPattern;
 import root.mind.CutterPattern;
+import root.mind.Triplet;
 import root.plm.*;
 import root.plm.entity.Twoken;
 import root.plm.entity.Word;
@@ -25,6 +26,7 @@ public class Core {
     final Map<Integer, List<Integer>> consumerMap = new HashMap<>();
     final Map<List<Integer>, Map<Integer, Double>> cutterPattern;
     final Map<Integer, Map<Integer, Integer>> buildingPattern;
+    final Set<Triplet> tripletSet;
 
     public Core(Bank bank, ReplaceRepeatedChars replaceRepeatedChars, ContextCore contextCore, SqlMapper mapper) {
         this.bank = bank;
@@ -41,6 +43,7 @@ public class Core {
         buildingPattern = new BuildingPattern(mapper.selectBuildingPattern(), bank.wordList, bank.compoundList).get();
         mapper.deleteExperiencedOpener();
         mapper.insertExperiencedOpener();
+        tripletSet = mapper.selectTriplet();
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

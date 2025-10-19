@@ -76,6 +76,12 @@
         where wq.lc or wq.cw or wq.rt = '0'
         order by wq.sentence, wq.i
     </select>
+    <select id="selectTriplet" resultType="root.mind.Triplet">
+        select distinct sq.lead, sq.context from (
+        select uc.sentence, uc.i, LAG(uc.context) over(partition by uc.sentence order by uc.i) lead, uc.context from plm_ultron_context uc
+        ) sq
+        where sq.i != 0
+    </select>
 
     <insert id="insertUltronCloser">
         insert into plm_ultron_closer
