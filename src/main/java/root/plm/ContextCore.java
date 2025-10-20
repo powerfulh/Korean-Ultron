@@ -11,7 +11,7 @@ import java.util.List;
 @Component
 public class ContextCore {
     final String afterType = "어미";
-    final String supportType = "조사";
+    final String supportType = "cutter";
     final String zeroType = "0";
     final String thingType = "무엇";
     final List<Integer> issue29except = List.of(2506, 105, 3876);
