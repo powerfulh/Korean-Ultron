@@ -20,8 +20,9 @@ public class StaticUtil {
             Toke lastUnderstand = understandList.get(understandList.size() - 1);
             var sh = successHistory.get(src.getRight(), lastUnderstand.getN());
             if(sh != null) {
-                sh.forEach(item -> {
-                    var merge = new ArrayList<>(understandList);
+                final var beforeMerge = understandList.subList(0, understandList.size() - sh.retryCnt());
+                sh.toBe().forEach(item -> {
+                    var merge = new ArrayList<>(beforeMerge);
                     merge.addAll(item);
                     sentenceList.add(new Sentence(merge, contextList));
                 });
@@ -70,10 +71,16 @@ public class StaticUtil {
             }
             final String right = src.getRight();
             final int understandSize = understandList.size();
+            final var currentUnderstand = understandList.stream().map(Toke::getN).toList();
             separateToken(understandList, src.pushToke(understandList, best), wordList, failHistory, contextList, sentenceList, compoundList, successHistory, contextCore);
             var branchList = sentenceList.subList(ss, sentenceList.size());
             if(!branchList.isEmpty()) {
-                successHistory.put(right, lastUnderstand.getN(), branchList.stream().map(item -> item.subList(understandSize, item.size())).toList());
+                int keepCnt = 0;
+                for (int i = 0; i < Math.min(understandSize, branchList.stream().mapToInt(ArrayList::size).min().orElseThrow()); i++) {
+                    if(!currentUnderstand.get(i).equals(branchList.get(0).get(i).getN())) break;
+                    keepCnt++;
+                }
+                successHistory.put(right, lastUnderstand.getN(), branchList.stream().map(item -> item.subList(understandSize, item.size())).toList(), understandSize - keepCnt);
             }
         }
     }
