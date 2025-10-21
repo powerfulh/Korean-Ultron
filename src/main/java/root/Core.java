@@ -154,11 +154,10 @@ class UltronSentence extends ArrayList<UltronContext> {
     final int point;
     final String bonusLog;
 
-    int cutterBonus(List<Integer> lastPattern, Map<List<Integer>, Map<Integer, Double>> pattern, int cutter) {
-        if(lastPattern.isEmpty()) return 0;
+    double cutterBonus(List<Integer> lastPattern, Map<List<Integer>, Map<Integer, Double>> pattern, int cutter) {
         var existLastPattern = pattern.get(lastPattern);
-        final double chance = Objects.requireNonNullElse(existLastPattern.get(cutter), 0.0);
-        return (int) Math.ceil(chance * (lastPattern.size() + (cutter == CutterPattern.closer ? 1 : 0)));
+        if(existLastPattern == null) return 0;
+        return Objects.requireNonNullElse(existLastPattern.get(cutter), 0.0);
     }
     int cutBonus(List<UltronContext> cut) {
         if(cut.size() < 2) return 0;
@@ -175,8 +174,8 @@ class UltronSentence extends ArrayList<UltronContext> {
         super(list);
         final var opener = get(0);
         export = opener.lw.concat(stream().map(item -> (item.space > item.cnt ? " " : "").concat(item.rw)).collect(Collectors.joining()));
-        int basic = 0, unconsumedPenalty = 0, cutterPatternBonus = 0, buildingPatternBonus = 0, tripletBonus = 0, breakAbstractPenalty = 0;
-        boolean closedCutterPattern = false;
+        int basic = 0, unconsumedPenalty = 0, buildingPatternBonus = 0, tripletBonus = 0, breakAbstractPenalty = 0;
+        List<Double> cutterPatternAdjust = new ArrayList<>();
         List<UltronContext> cut = new ArrayList<>();
         boolean breakAbstract = false;
         for (int i = 0; i < size(); i++) {
@@ -190,15 +189,11 @@ class UltronSentence extends ArrayList<UltronContext> {
                 final var currentSub = subList(0, i + 1);
                 if(currentSub.stream().noneMatch(item -> consumerMap.get(cn).contains(item.context))) unconsumedPenalty = i + 1;
             }
-            // Cutter pattern bonus
-            if(!closedCutterPattern && current.rcutter != null) {
-                try {
-                    final var lastSub = subList(0, i);
-                    final var lastPattern = lastSub.stream().filter(item -> item.rcutter != null).map(item -> item.rcutter).toList();
-                    cutterPatternBonus += cutterBonus(lastPattern, pattern, current.rcutter);
-                } catch (NullPointerException e) {
-                    closedCutterPattern = true;
-                }
+            // Cutter pattern Adjust
+            if(current.rcutter != null) {
+                final var lastSub = subList(0, i);
+                final var lastPattern = lastSub.stream().filter(item -> item.rcutter != null).map(item -> item.rcutter).toList();
+                if(!lastPattern.isEmpty()) cutterPatternAdjust.add(cutterBonus(lastPattern, pattern, current.rcutter));
             }
             // Building pattern bonus
             if(current.rcutter != null) {
@@ -210,17 +205,17 @@ class UltronSentence extends ArrayList<UltronContext> {
             if(breakAbstract) breakAbstractPenalty += current.getPoint();
             else if(last != null && last.rightAbstract != null && last.rightAbstract != cn) breakAbstract = true;
         }
-        // Cutter pattern last bonus
-        try {
-            cutterPatternBonus += cutterBonus(stream().filter(item -> item.rcutter != null).map(item -> item.rcutter).toList(), pattern, CutterPattern.closer);
-        } catch (NullPointerException ignored) {}
+        // Cutter pattern last Adjust
+        final var lastPattern = stream().filter(item -> item.rcutter != null).map(item -> item.rcutter).toList();
+        if(!lastPattern.isEmpty()) cutterPatternAdjust.add(cutterBonus(lastPattern, pattern, CutterPattern.closer));
         // None closer penalty
         final int ncp = get(size() - 1).closerContext ? 0 : size();
         // Building pattern last bonus
         buildingPatternBonus += cutBonus(cut);
         final int openBonus = opener.exOpener ? opener.getPoint() : 0;
-        point = (basic + openBonus + tripletBonus - unconsumedPenalty - ncp - breakAbstractPenalty) * Math.max(cutterPatternBonus + buildingPatternBonus, 1);
-        bonusLog = "(" + basic + " + " + openBonus + " + " + tripletBonus + " - " + unconsumedPenalty + " - " + ncp + " - " + breakAbstractPenalty + ") * ((" + cutterPatternBonus + " + " + buildingPatternBonus + ") || 1)";
+        final double adjust = cutterPatternAdjust.stream().mapToDouble(Double::doubleValue).average().orElse(0);
+        point = (int) ((basic + openBonus + tripletBonus - unconsumedPenalty - ncp - breakAbstractPenalty) * Math.max(buildingPatternBonus, 1) * adjust);
+        bonusLog = "(" + basic + " + " + openBonus + " + " + tripletBonus + " - " + unconsumedPenalty + " - " + ncp + " - " + breakAbstractPenalty + ") * (" + buildingPatternBonus + " || 1) * %" + ((int)(adjust * 100));
     }
 
     Map<String, Object> toDto(boolean e) {
