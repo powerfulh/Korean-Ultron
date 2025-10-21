@@ -62,7 +62,7 @@ public class Core {
         for (var opener: openerList) {
             List<Toke> understandList = new ArrayList<>();
             try {
-                StaticUtil.separateToken(understandList, understandTarget.pushToke(understandList, opener), bank.wordList, failHistory, bank.contextList, sentenceList, bank.compoundList, successHistory, contextCore);
+                StaticUtil.separateToken(understandList, understandTarget.pushToke(understandList, opener), new Dict(bank.wordList), failHistory, bank.contextList, sentenceList, bank.compoundList, successHistory, contextCore);
             } catch (PlmException plmException) {
                 e = plmException;
             }

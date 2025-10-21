@@ -37,7 +37,7 @@ public class ContextCore {
         }
         if(leftBonus) target.rightContext++;
     }
-    public void rightContext(Toke target, Word left, Word right, List<Context> contextList, List<Compound> compoundList, List<Word> wordList, boolean space, boolean otherOption, int leftCompoundLength) {
+    public void rightContext(Toke target, Word left, Word right, List<Context> contextList, List<Compound> compoundList, Dict wordList, boolean space, boolean otherOption, int leftCompoundLength) {
         target.contextHistory.computeIfAbsent(left.getN(), k -> new ArrayList<>());
         var h = target.contextHistory.get(left.getN());
         if(!h.isEmpty() && h.stream().anyMatch(item -> item.equals(right.getN()))) return;
@@ -48,12 +48,12 @@ public class ContextCore {
                 .filter(item -> right.getN().equals(item.getWord()))
                 .findAny()
                 .ifPresent(compound ->
-                        rightContext(target, left, StaticUtil.selectWord(compound.getLeftword(), wordList), contextList, compoundList, wordList, space, false, 0));
+                        rightContext(target, left, wordList.get(compound.getLeftword()), contextList, compoundList, wordList, space, false, 0));
         compoundList.stream()
                 .filter(item -> left.getN().equals(item.getWord()))
                 .findAny()
                 .ifPresent(compound ->
-                        rightContext(target, StaticUtil.selectWord(compound.getRightword(), wordList), right, contextList, compoundList, wordList, space, false, left.getWord().length()));
+                        rightContext(target, wordList.get(compound.getRightword()), right, contextList, compoundList, wordList, space, false, left.getWord().length()));
     }
     public Toke lengthRate(Toke target) {
         // 문맥이 없어 모든 분기가 탈락하고 마지막 놈만 잡히는 것을 방지하려고 최종적으로 후보의 길이가 긴 녀석을 고르도록 한다

@@ -14,7 +14,7 @@ public class StaticUtil {
     public static <T extends Ntity>T selectWord(int n, List<T> data) {
         return data.stream().filter(item -> item.getN() == n).findAny().orElseThrow();
     }
-    public static void separateToken(List<Toke> understandList, UnderstandTarget src, final List<Word> wordList, Map<String, List<Word>> failHistory, List<Context> contextList, List<Sentence> sentenceList, List<Compound> compoundList, SuccessHistory successHistory, ContextCore contextCore) {
+    public static void separateToken(List<Toke> understandList, UnderstandTarget src, final Dict wordList, Map<String, List<Word>> failHistory, List<Context> contextList, List<Sentence> sentenceList, List<Compound> compoundList, SuccessHistory successHistory, ContextCore contextCore) {
         if(src.success()) sentenceList.add(new Sentence(understandList, contextList));
         else {
             Toke lastUnderstand = understandList.get(understandList.size() - 1);
@@ -29,7 +29,8 @@ public class StaticUtil {
                 return;
             }
             var h = failHistory.get(src.getRight());
-            var sameList = wordList.stream()
+            final var page = wordList.book.get(src.getRight().charAt(0));
+            List<Toke> sameList = page == null ? List.of() : page.stream()
                     .map(item -> {
                         Toke toke = src.getAvailableToke(item);
                         if(toke == null || understandList.isEmpty()) return toke;
