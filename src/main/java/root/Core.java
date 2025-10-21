@@ -154,7 +154,7 @@ class UltronSentence extends ArrayList<UltronContext> {
     final int point;
     final String bonusLog;
 
-    double cutterBonus(List<Integer> lastPattern, Map<List<Integer>, Map<Integer, Double>> pattern, int cutter) {
+    double cutterChance(List<Integer> lastPattern, Map<List<Integer>, Map<Integer, Double>> pattern, int cutter) {
         var existLastPattern = pattern.get(lastPattern);
         if(existLastPattern == null) return 0;
         return Objects.requireNonNullElse(existLastPattern.get(cutter), 0.0);
@@ -193,7 +193,7 @@ class UltronSentence extends ArrayList<UltronContext> {
             if(current.rcutter != null) {
                 final var lastSub = subList(0, i);
                 final var lastPattern = lastSub.stream().filter(item -> item.rcutter != null).map(item -> item.rcutter).toList();
-                if(!lastPattern.isEmpty()) cutterPatternAdjust.add(cutterBonus(lastPattern, pattern, current.rcutter));
+                if(!lastPattern.isEmpty()) cutterPatternAdjust.add(cutterChance(lastPattern, pattern, current.rcutter));
             }
             // Building pattern bonus
             if(current.rcutter != null) {
@@ -207,7 +207,7 @@ class UltronSentence extends ArrayList<UltronContext> {
         }
         // Cutter pattern last Adjust
         final var lastPattern = stream().filter(item -> item.rcutter != null).map(item -> item.rcutter).toList();
-        if(!lastPattern.isEmpty()) cutterPatternAdjust.add(cutterBonus(lastPattern, pattern, CutterPattern.closer));
+        if(!lastPattern.isEmpty()) cutterPatternAdjust.add(cutterChance(lastPattern, pattern, CutterPattern.closer));
         // None closer penalty
         final int ncp = get(size() - 1).closerContext ? 0 : size();
         // Building pattern last bonus
