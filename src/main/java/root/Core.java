@@ -91,8 +91,8 @@ public class Core {
     }
 
     @GetMapping
-    public V1Res v1(@Valid @Size(min = 1, max = 30) String pureSrc, boolean export) {
-        if(pureSrc.replaceAll("\\s+", "").length() > 19) throw new IllegalArgumentException();
+    public V1Res v1(@Valid @Size(min = 1, max = 40) String pureSrc, boolean export) {
+        if(pureSrc.replaceAll("\\s+", "").length() > 25) throw new IllegalArgumentException();
         Map<Integer, List<List<UltronContext>>> listMap = new HashMap<>();
         var understood = understand(pureSrc);
         var targetList = mapper.selectGenerationTarget(understood, 50 + understood.size());
