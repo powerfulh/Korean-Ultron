@@ -32,7 +32,11 @@ public class CutterPattern {
         final Map<List<Integer>, Map<Integer, Double>> pattern = new HashMap<>();
         map.forEach((key, value) -> {
             final int sum = map.get(key).values().stream().mapToInt(point -> point).sum();
-            pattern.put(key, value.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue() * 1.0 / sum)));
+            pattern.put(
+                    key,
+                    value.entrySet().stream()
+                            .collect(Collectors.toMap(Map.Entry::getKey, e -> Math.min((e.getValue() * 1.0 / sum) * e.getValue(), 1)))
+            );
         });
         return pattern;
     }
