@@ -217,7 +217,7 @@ class UltronSentence extends ArrayList<UltronContext> {
         final int tripletAverage = size() == 1 ? 0 : (tripletBonus / (size() - 1));
         final double adjust = cutterPatternAdjust.stream().mapToDouble(Double::doubleValue).average().orElse(0);
         point = (int) ((basic * tripletAverage + openBonus - unconsumedPenalty - ncp - breakAbstractPenalty) * Math.max(buildingPatternBonus, 1) * adjust);
-        bonusLog = "(" + basic + " * " + tripletAverage + " + " + openBonus + " - " + unconsumedPenalty + " - " + ncp + " - " + breakAbstractPenalty + ") * (" + buildingPatternBonus + " || 1) * %" + ((int)(adjust * 100));
+        bonusLog = "(" + basic + " * " + tripletAverage + " + " + openBonus + " - " + unconsumedPenalty + " - " + ncp + " - " + breakAbstractPenalty + ") * (" + buildingPatternBonus + " || 1) * " + ((int)(adjust * 100) / 100.0);
     }
 
     Map<String, Object> toDto(boolean e) {
