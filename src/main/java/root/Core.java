@@ -181,6 +181,7 @@ class UltronSentence extends ArrayList<UltronContext> {
         for (int i = 0; i < size(); i++) {
             final var current = get(i);
             basic += current.getPoint();
+            // Triplet bonus
             final var last = i > 0 ? get(i - 1) : null;
             if(i > 0 && current.pri == 1 && last.pri == 1 && tripletSet.contains(new Triplet(last.context, current.context))) tripletBonus += current.rcnt;
             // Penalty
@@ -213,9 +214,10 @@ class UltronSentence extends ArrayList<UltronContext> {
         // Building pattern last bonus
         buildingPatternBonus += cutBonus(cut);
         final int openBonus = opener.exOpener ? opener.getPoint() : 0;
+        final int tripletAverage = size() == 1 ? 0 : (tripletBonus / (size() - 1));
         final double adjust = cutterPatternAdjust.stream().mapToDouble(Double::doubleValue).average().orElse(0);
-        point = (int) ((basic + openBonus + tripletBonus - unconsumedPenalty - ncp - breakAbstractPenalty) * Math.max(buildingPatternBonus, 1) * adjust);
-        bonusLog = "(" + basic + " + " + openBonus + " + " + tripletBonus + " - " + unconsumedPenalty + " - " + ncp + " - " + breakAbstractPenalty + ") * (" + buildingPatternBonus + " || 1) * %" + ((int)(adjust * 100));
+        point = (int) ((basic * tripletAverage + openBonus - unconsumedPenalty - ncp - breakAbstractPenalty) * Math.max(buildingPatternBonus, 1) * adjust);
+        bonusLog = "(" + basic + " * " + tripletAverage + " + " + openBonus + " - " + unconsumedPenalty + " - " + ncp + " - " + breakAbstractPenalty + ") * (" + buildingPatternBonus + " || 1) * %" + ((int)(adjust * 100));
     }
 
     Map<String, Object> toDto(boolean e) {
